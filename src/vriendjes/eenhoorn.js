@@ -25,7 +25,7 @@ export default {
     g.add(kop);
     kop.add(bol(wit, 0.25, [0, 0, 0.05], [0.9, 0.95, 1.2]));
     kop.add(bol(roze, 0.15, [0, -0.08, 0.28], [1, 0.8, 0.9]));
-    ogen(kop, 0.13, 0.05, 0.2, 0.06, 0x6a1b9a);
+    ogen(kop, 0.13, 0.05, 0.2, 0.081, 0x6a1b9a);
     const hoorn = kegel(goud, 0.06, 0.4, [0, 0.3, 0.15], 10, { gloed: 0.4 });
     hoorn.rotation.x = 0.4;
     kop.add(hoorn);

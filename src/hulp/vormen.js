@@ -16,12 +16,35 @@ export function gedeeldeGeometrie(sleutel, maak) {
   return g;
 }
 
-// gloed: laat iets licht geven (0..1), doorzichtig: 0..1, vlak: voor platte dingen op de grond
-export function materiaal(hex, { gloed = 0, doorzichtig = 1, vlak = false } = {}) {
-  const sleutel = `${hex}|${gloed}|${doorzichtig}|${vlak}`;
+// Tekenfilm-stijl: licht in een paar vlakke banden in plaats van zacht verloop
+let toonVerloop = null;
+export function toonVerloopKaart() {
+  if (!toonVerloop) {
+    toonVerloop = new THREE.DataTexture(new Uint8Array([150, 205, 255]), 3, 1, THREE.RedFormat);
+    toonVerloop.minFilter = toonVerloop.magFilter = THREE.NearestFilter;
+    toonVerloop.generateMipmaps = false;
+    toonVerloop.needsUpdate = true;
+  }
+  return toonVerloop;
+}
+
+// Omlijning in een donkere versie van de eigen kleur (zoals in een tekenfilm)
+export function lijn(hex, dikte = 0.0035) {
+  const c = new THREE.Color(hex), hsl = {};
+  c.getHSL(hsl);
+  c.setHSL(hsl.h, Math.min(1, hsl.s * 0.8 + 0.2), hsl.l * 0.3);
+  return { thickness: dikte, color: c.toArray(), alpha: 1, keepAlive: true };
+}
+export const GEEN_LIJN = { visible: false };
+
+// gloed: laat iets licht geven (0..1), doorzichtig: 0..1, vlak: voor platte dingen op de grond,
+// rand: false = geen omlijning (voor ogen, blosjes, gras, ...)
+export function materiaal(hex, { gloed = 0, doorzichtig = 1, vlak = false, rand = true } = {}) {
+  const sleutel = `${hex}|${gloed}|${doorzichtig}|${vlak}|${rand}`;
   let m = materialen.get(sleutel);
   if (!m) {
-    m = new THREE.MeshLambertMaterial({ color: hex });
+    m = new THREE.MeshToonMaterial({ color: hex, gradientMap: toonVerloopKaart() });
+    m.userData.outlineParameters = rand && doorzichtig === 1 && !vlak ? lijn(hex) : GEEN_LIJN;
     if (gloed) {
       m.emissive.set(hex);
       m.emissiveIntensity = gloed;
@@ -128,12 +151,26 @@ export function groep(x = 0, y = 0, z = 0) {
   return g;
 }
 
-// Twee ogen (wit + pupil + glimlichtje), links en rechts op afstand x
-export function ogen(ouder, x, y, z, r = 0.08, irisKleur = 0x222222) {
+// Twee grote anime-ogen (iris, pupil, glimlichtjes, ooglid) met blosjes eronder.
+// x: afstand van het midden, y/z: positie op het gezicht, r: grootte
+export function ogen(ouder, x, y, z, r = 0.08, irisKleur = 0x5a2d1a, { blos = true } = {}) {
+  const geen = { rand: false };
+  const glim = { rand: false, gloed: 0.6 };
   for (const s of [-1, 1]) {
-    ouder.add(bol(0xffffff, r, [s * x, y, z]));
-    ouder.add(bol(irisKleur, r * 0.62, [s * x, y, z + r * 0.55]));
-    ouder.add(bol(0xffffff, r * 0.22, [s * x + r * 0.22, y + r * 0.28, z + r * 1.02]));
+    const oog = groep(s * x, y, z);
+    oog.rotation.y = s * 0.28;
+    oog.add(bol(0xffffff, r, [0, 0, 0], [0.85, 1.15, 0.5], geen));
+    oog.add(bol(irisKleur, r * 0.78, [0, -r * 0.05, r * 0.18], [0.85, 1.12, 0.5], geen));
+    oog.add(bol(0x1a0d08, r * 0.42, [0, -r * 0.08, r * 0.4], [0.9, 1.1, 0.5], geen));
+    oog.add(bol(0xffffff, r * 0.3, [r * 0.24, r * 0.36, r * 0.6], [1, 1, 0.5], glim));
+    oog.add(bol(0xffffff, r * 0.13, [-r * 0.22, -r * 0.38, r * 0.55], [1, 1, 0.5], glim));
+    // ooglid met een wimper-krulletje aan de buitenkant
+    const lid = torus(0x2b160c, r, r * 0.13, [0, r * 0.02, r * 0.15], Math.PI * 0.5, geen);
+    lid.rotation.z = Math.PI * (0.25 - s * 0.21);
+    lid.scale.set(r * 0.92, r * 1.2, r);
+    oog.add(lid);
+    if (blos) oog.add(bol(0xff8fab, r * 0.55, [s * r * 0.35, -r * 1.45, r * 0.1], [1.3, 0.65, 0.3], { rand: false, doorzichtig: 0.7 }));
+    ouder.add(oog);
   }
 }
 

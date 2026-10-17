@@ -9,6 +9,9 @@ export class Vriendje {
     this.groep = new THREE.Group();
     this.model = def.maak ? def.maak() : new THREE.Group();
     this.groep.add(this.model);
+    // chibi-stijl: grotere koppies
+    const kop = this.model.userData.kop;
+    if (kop && kop.position.y > 0) kop.scale.multiplyScalar(1.22);
     this.toestand = 'verstopt';
     this.fase = Math.random() * 10;
     this.timer = 0;

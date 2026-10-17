@@ -19,7 +19,7 @@ export default {
     kop.add(bol(0xffffff, 0.12, [0, -0.09, 0.22], [1.4, 0.8, 0.8]));
     kop.add(bol(roze, 0.04, [0, -0.04, 0.3]));
     kop.add(doos(0xffffff, [0.07, 0.06, 0.02], [0, -0.17, 0.27]));
-    ogen(kop, 0.12, 0.05, 0.23, 0.065);
+    ogen(kop, 0.12, 0.05, 0.23, 0.088);
     for (const s of [-1, 1]) {
       const oor = groep(s * 0.1, 0.22, -0.02);
       oor.add(bol(wit, 0.1, [0, 0.26, 0], [0.75, 2.7, 0.45]));

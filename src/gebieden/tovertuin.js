@@ -57,6 +57,7 @@ export default {
     D.bloemen(w, 1800, [0xff6fae, 0xffd166, 0xb388ff, 0x80deea, 0xffffff]);
     D.gras(w, 1500, 0x5cb85c);
     D.vuurvliegjes(w, 350, 0xfff59d);
+    D.bloesem(w, 240);
     D.wolken(w, 14);
   },
 };

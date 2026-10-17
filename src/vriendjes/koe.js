@@ -22,7 +22,7 @@ export default {
     g.add(kop);
     kop.add(bol(wit, 0.3, [0, 0, 0], [1, 1, 1.1]));
     kop.add(bol(roze, 0.2, [0, -0.13, 0.26], [1.25, 0.85, 0.9]));
-    ogen(kop, 0.14, 0.1, 0.25, 0.065);
+    ogen(kop, 0.14, 0.1, 0.25, 0.088);
     kop.add(bol(zwart, 0.1, [0, 0.27, 0.08], [1.2, 0.6, 1]));
     for (const s of [-1, 1]) {
       kop.add(bol(0xd88a9a, 0.035, [s * 0.08, -0.12, 0.43]));

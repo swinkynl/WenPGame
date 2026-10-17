@@ -3,7 +3,7 @@
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { maakRng, schud } from './hulp/wiskunde.js';
-import { opruimen } from './hulp/vormen.js';
+import { opruimen, toonVerloopKaart, GEEN_LIJN } from './hulp/vormen.js';
 
 export class Wereld {
   constructor(gebied) {
@@ -192,7 +192,7 @@ export class Wereld {
   // ---------- elke frame ----------
 
   update(dt, tijd, volgPositie, camera) {
-    for (const u of this.updaters) u(dt, tijd);
+    for (const u of this.updaters) u(dt, tijd, volgPositie);
     this.zon.position.copy(volgPositie).add(this.zonRichting);
     this.zon.target.position.copy(volgPositie);
     this.koepel.position.copy(camera.position);
@@ -219,6 +219,7 @@ export class Wereld {
       vertexColors: true, side: THREE.BackSide, fog: false, depthWrite: false,
     }));
     this.koepel.renderOrder = -1;
+    this.koepel.material.userData.outlineParameters = GEEN_LIJN;
     this.koepel.userData.dynamisch = true;
     this.scene.add(this.koepel);
 
@@ -255,7 +256,9 @@ export class Wereld {
     }
     geo.setAttribute('color', new THREE.Float32BufferAttribute(kleuren, 3));
     geo.computeVertexNormals();
-    const grond = new THREE.Mesh(geo, new THREE.MeshLambertMaterial({ vertexColors: true }));
+    const grondMat = new THREE.MeshToonMaterial({ vertexColors: true, gradientMap: toonVerloopKaart() });
+    grondMat.userData.outlineParameters = GEEN_LIJN;
+    const grond = new THREE.Mesh(geo, grondMat);
     grond.receiveShadow = true;
     grond.userData.dynamisch = true;
     this.scene.add(grond);

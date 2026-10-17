@@ -18,7 +18,7 @@ export default {
     kop.add(bol(oranje, 0.33, [0, 0, 0], [1.05, 0.95, 1]));
     kop.add(bol(licht, 0.15, [0, -0.1, 0.24], [1.3, 0.8, 0.8]));
     kop.add(bol(roze, 0.045, [0, -0.04, 0.34]));
-    ogen(kop, 0.13, 0.06, 0.27, 0.07, 0x2e7d32);
+    ogen(kop, 0.13, 0.06, 0.27, 0.095, 0x2e7d32);
     for (const s of [-1, 1]) {
       const oor = kegel(oranje, 0.12, 0.26, [s * 0.18, 0.3, 0], 8);
       oor.rotation.z = -s * 0.35;

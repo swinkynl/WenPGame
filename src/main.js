@@ -1,5 +1,6 @@
 // Het spel: start, spelregels en de spellus.
 import * as THREE from 'three';
+import { OutlineEffect } from 'three/addons/effects/OutlineEffect.js';
 import { Wereld } from './wereld.js';
 import { Hondje } from './hondje.js';
 import { Invoer } from './invoer.js';
@@ -21,6 +22,8 @@ const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPrefere
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+// tekenfilm-omlijning om alles heen
+const tekenaar = new OutlineEffect(renderer, { defaultThickness: 0.0035, defaultColor: [0.25, 0.14, 0.1], defaultKeepAlive: true });
 
 const camera = new THREE.PerspectiveCamera(60, 1, 0.1, 220);
 const invoer = new Invoer(canvas);
@@ -187,7 +190,7 @@ function lus(nu) {
   wereld.update(dt, t, hond.positie, camera);
   if (spel.hulpNeus) UI.neus(dichtsbij);
 
-  renderer.render(wereld.scene, camera);
+  tekenaar.render(wereld.scene, camera);
 }
 
 document.getElementById('knop-huis').addEventListener('click', naarMenu);
@@ -200,4 +203,4 @@ requestAnimationFrame(lus);
 
 // voor testen in de console
 window.spel = () => spel;
-window.debug = { renderer, camera, volgCamera, invoer, lus };
+window.debug = { renderer, tekenaar, camera, volgCamera, invoer, lus };

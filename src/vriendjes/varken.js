@@ -24,7 +24,7 @@ export default {
       oor.rotation.set(0.6, 0, -s * 0.4);
       kop.add(oor);
     }
-    ogen(kop, 0.14, 0.1, 0.26, 0.06);
+    ogen(kop, 0.14, 0.1, 0.26, 0.081);
     const staart = groep(0, 0.62, -0.56);
     const krul = torus(donker, 0.08, 0.025);
     krul.rotation.y = Math.PI / 2;

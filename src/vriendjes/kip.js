@@ -28,7 +28,7 @@ export default {
     snavel.rotation.x = Math.PI / 2;
     kop.add(snavel);
     kop.add(bol(rood, 0.04, [0, -0.1, 0.18], [0.8, 1.4, 0.8]));
-    ogen(kop, 0.09, 0.05, 0.15, 0.045);
+    ogen(kop, 0.09, 0.05, 0.15, 0.061);
     g.userData.kop = kop;
     g.userData.staart = staart;
     return g;

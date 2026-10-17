@@ -1,60 +1,70 @@
 // Het gele hondje: de speler.
 import * as THREE from 'three';
-import { bol, cilinder, torus, groep, ogen } from './hulp/vormen.js';
+import { bol, cilinder, kegel, groep, ogen } from './hulp/vormen.js';
 import { draaiNaar } from './hulp/wiskunde.js';
 
 const MAX_SNELHEID = 9;
 const STRAAL = 0.6;
 const ZWAARTEKRACHT = 22;
 
+// Chibi-stijl: groot koppie, grote glimogen, flaporen, pluizige borst en staart
 function maakModel() {
-  const geel = 0xffcf33, lichtgeel = 0xfff1b8, oorkleur = 0xe8a317;
+  const goud = 0xf6c25f, room = 0xfff0d2, glans = 0xffe2a6, oorkleur = 0xe7a043;
   const hond = new THREE.Group();
 
   const lijf = groep();
   hond.add(lijf);
-  lijf.add(bol(geel, 0.5, [0, 0.82, 0], [0.95, 0.85, 1.3]));
-  lijf.add(bol(lichtgeel, 0.36, [0, 0.7, 0.22], [0.9, 0.8, 1.2]));
-
-  // halsband met penning
-  const band = torus(0xe63946, 0.3, 0.06, [0, 1.08, 0.5]);
-  band.rotation.x = Math.PI / 2 - 0.5;
-  lijf.add(band);
-  lijf.add(bol(0xffd700, 0.07, [0, 0.93, 0.74]));
+  lijf.add(bol(goud, 0.42, [0, 0.72, -0.02], [0.95, 0.88, 1.15]));
+  // pluizige borst
+  for (const [x, y, z, r] of [[0, 0.82, 0.3, 0.22], [-0.13, 0.7, 0.3, 0.16], [0.13, 0.7, 0.3, 0.16], [0, 0.62, 0.3, 0.15]]) {
+    lijf.add(bol(room, r, [x, y, z], [1, 1, 1], { rand: false }));
+  }
 
   // kop
-  const kop = groep(0, 1.38, 0.64);
+  const kop = groep(0, 1.42, 0.2);
   lijf.add(kop);
-  kop.add(bol(geel, 0.42, [0, 0, 0], [1, 0.95, 1]));
-  kop.add(bol(lichtgeel, 0.22, [0, -0.1, 0.33], [1.1, 0.85, 1.1]));
-  kop.add(bol(0x2b2b2b, 0.08, [0, -0.02, 0.56], [1.25, 0.9, 1]));
-  kop.add(bol(0xff7b9c, 0.08, [0, -0.25, 0.42], [1, 0.45, 1.2]));
-  ogen(kop, 0.16, 0.1, 0.33, 0.075);
+  kop.add(bol(goud, 0.55, [0, 0, 0], [1.08, 0.95, 0.95]));
+  kop.add(bol(room, 0.2, [0, -0.15, 0.42], [1.3, 0.85, 0.8]));
+  kop.add(bol(0x2a1a14, 0.075, [0, -0.06, 0.58], [1.3, 0.95, 0.9]));
+  kop.add(bol(0xffffff, 0.022, [0.03, -0.03, 0.645], [1, 1, 1], { rand: false, gloed: 0.5 }));
+  // open lachend mondje met tongetje
+  kop.add(bol(0x7a2232, 0.1, [0, -0.25, 0.48], [1.15, 0.7, 0.5], { rand: false }));
+  kop.add(bol(0xff7e98, 0.07, [0, -0.29, 0.52], [1.1, 0.55, 0.5], { rand: false }));
+  // glansplekjes en plukje haar
+  kop.add(bol(glans, 0.09, [-0.2, 0.3, 0.38], [1.2, 0.6, 0.4], { rand: false }));
+  kop.add(bol(glans, 0.06, [0.24, 0.32, 0.36], [1.2, 0.6, 0.4], { rand: false }));
+  for (const [x, rz] of [[-0.06, 0.35], [0.02, -0.1], [0.09, -0.5]]) {
+    const pluk = kegel(goud, 0.07, 0.24, [x, 0.56, 0.05], 8);
+    pluk.rotation.set(0.3, 0, rz);
+    kop.add(pluk);
+  }
+  ogen(kop, 0.23, 0.06, 0.44, 0.16, 0x8b2e1f);
 
   const oren = [];
   for (const s of [-1, 1]) {
-    const oor = groep(s * 0.32, 0.22, -0.02);
-    oor.add(bol(oorkleur, 0.17, [0, -0.15, 0], [0.55, 1.25, 0.9]));
-    oor.rotation.z = s * 0.35;
+    const oor = groep(s * 0.5, 0.2, -0.02);
+    oor.add(bol(oorkleur, 0.27, [0, -0.3, 0], [0.45, 1.25, 0.85]));
+    oor.rotation.z = s * 0.15;
     kop.add(oor);
     oren.push(oor);
   }
 
-  // pootjes (draaipunt bij de heup)
+  // korte pootjes (draaipunt bij de heup)
   const poten = [];
-  for (const [x, z] of [[-0.25, 0.38], [0.25, 0.38], [-0.25, -0.36], [0.25, -0.36]]) {
-    const poot = groep(x, 0.62, z);
-    poot.add(cilinder(geel, 0.11, 0.1, 0.55, [0, -0.27, 0], 10));
-    poot.add(bol(lichtgeel, 0.13, [0, -0.55, 0.04], [1, 0.65, 1.2]));
+  for (const [x, z] of [[-0.2, 0.22], [0.2, 0.22], [-0.2, -0.26], [0.2, -0.26]]) {
+    const poot = groep(x, 0.45, z);
+    poot.add(cilinder(goud, 0.12, 0.11, 0.32, [0, -0.17, 0], 10));
+    poot.add(bol(goud, 0.14, [0, -0.36, 0.04], [1, 0.7, 1.2]));
     hond.add(poot);
     poten.push(poot);
   }
 
-  // kwispelstaart
-  const staart = groep(0, 0.98, -0.6);
-  staart.add(cilinder(geel, 0.05, 0.09, 0.5, [0, 0.25, 0], 8));
-  staart.add(bol(lichtgeel, 0.09, [0, 0.5, 0]));
-  staart.rotation.x = -0.6;
+  // pluizige krulstaart
+  const staart = groep(0, 0.85, -0.42);
+  [[0, 0.05, -0.05, 0.13], [0, 0.22, -0.14, 0.15], [0, 0.4, -0.16, 0.16], [0, 0.55, -0.08, 0.14]]
+    .forEach(([x, y, z, r]) => staart.add(bol(goud, r, [x, y, z])));
+  staart.add(bol(room, 0.12, [0, 0.66, 0.02]));
+  staart.rotation.x = -0.35;
   lijf.add(staart);
 
   return { hond, lijf, kop, oren, poten, staart };

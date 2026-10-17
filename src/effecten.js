@@ -6,6 +6,7 @@ geo.userData.gedeeld = true;
 const mats = [0xffd54f, 0xff80ab, 0x80deea, 0xb388ff, 0xffffff].map((c) => {
   const m = new THREE.MeshBasicMaterial({ color: c });
   m.userData.gedeeld = true;
+  m.userData.outlineParameters = { visible: false };
   return m;
 });
 

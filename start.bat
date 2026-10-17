@@ -9,4 +9,4 @@ for /f "tokens=2 delims=:" %%a in ('ipconfig ^| findstr /c:"IPv4"') do echo     
 echo.
 echo  Sluit dit venster om te stoppen.
 start "" http://localhost:8080
-python -m http.server 8080
+python server.py 8080

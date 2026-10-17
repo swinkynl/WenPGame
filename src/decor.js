@@ -5,7 +5,7 @@
 import * as THREE from 'three';
 import {
   bol, halfbol, doos, cilinder, kegel, torus, octa, steenvorm, schijf, groep,
-  materiaal, bolGeometrie,
+  materiaal, bolGeometrie, toonVerloopKaart, lijn,
 } from './hulp/vormen.js';
 
 // Plekjes rondom een object, op afstand r
@@ -430,9 +430,9 @@ export function maisveld(w, { x, z, b, d }) {
   bladGeo.translate(0, 1.45, 0);
   const kolfGeo = new THREE.CapsuleGeometry(0.09, 0.3, 3, 6);
   kolfGeo.translate(0.14, 1.6, 0);
-  const stelen = instanties(steelGeo, materiaal(0x7cb342), n);
-  const bladeren = instanties(bladGeo, new THREE.MeshLambertMaterial({ color: 0xffffff }), n, true);
-  const kolven = instanties(kolfGeo, materiaal(0xffd54f), n);
+  const stelen = instanties(steelGeo, materiaal(0x7cb342, { rand: false }), n);
+  const bladeren = instanties(bladGeo, materiaal(0xffffff, { rand: false }), n, true);
+  const kolven = instanties(kolfGeo, materiaal(0xffd54f, { rand: false }), n);
   const m = new THREE.Matrix4(), q = new THREE.Quaternion(), s = new THREE.Vector3(), p = new THREE.Vector3();
   const as = new THREE.Vector3(0, 1, 0), kleur = new THREE.Color();
   let i = 0;
@@ -461,8 +461,8 @@ export function bloemen(w, aantal, kleuren) {
   kopGeo.translate(0, 0.42, 0);
   const steelGeo = new THREE.CylinderGeometry(0.02, 0.02, 0.4, 4);
   steelGeo.translate(0, 0.2, 0);
-  const koppen = instanties(kopGeo, new THREE.MeshLambertMaterial({ color: 0xffffff }), aantal);
-  const stelen = instanties(steelGeo, materiaal(0x3d8b3d), aantal);
+  const koppen = instanties(kopGeo, materiaal(0xffffff, { rand: false }), aantal);
+  const stelen = instanties(steelGeo, materiaal(0x3d8b3d, { rand: false }), aantal);
   const m = new THREE.Matrix4(), kleur = new THREE.Color();
   let i = 0;
   for (let poging = 0; poging < aantal && i < aantal; poging++) {
@@ -486,7 +486,7 @@ export function bloemen(w, aantal, kleuren) {
 export function gras(w, aantal, kleur = 0x5cb85c) {
   const geo = new THREE.ConeGeometry(0.08, 0.5, 4);
   geo.translate(0, 0.25, 0);
-  const im = instanties(geo, new THREE.MeshLambertMaterial({ color: 0xffffff }), aantal);
+  const im = instanties(geo, materiaal(0xffffff, { rand: false }), aantal);
   const m = new THREE.Matrix4(), c = new THREE.Color(kleur), k = new THREE.Color();
   for (let i = 0; i < aantal; i++) {
     const s = w.tussen(0.6, 1.4);
@@ -550,8 +550,38 @@ export function vuurvliegjes(w, aantal = 300, kleur = 0xfff59d) {
   });
 }
 
+// Roze bloesemblaadjes die rond het hondje naar beneden dwarrelen
+export function bloesem(w, aantal = 220, kleuren = [0xffb7c9, 0xff9eb8, 0xffd1dc, 0xffffff]) {
+  const geo = new THREE.SphereGeometry(1, 6, 4);
+  geo.scale(0.14, 0.025, 0.1);
+  const im = instanties(geo, materiaal(0xffffff, { rand: false }), aantal);
+  const BOX = 40, HOOG = 14;
+  const blaadjes = [];
+  const kleur = new THREE.Color();
+  for (let i = 0; i < aantal; i++) {
+    blaadjes.push({ x: w.rng() * BOX, y: w.rng() * HOOG, z: w.rng() * BOX, v: w.tussen(0.6, 1.3), f: w.rng() * 10, r1: w.tussen(0.5, 2), r2: w.tussen(0.5, 2) });
+    im.setColorAt(i, kleur.setHex(w.kies(kleuren)));
+  }
+  const m = new THREE.Matrix4(), q = new THREE.Quaternion(), e = new THREE.Euler(), p = new THREE.Vector3(), s = new THREE.Vector3(1, 1, 1);
+  const rond = (waarde, midden) => midden + ((((waarde - midden + BOX / 2) % BOX) + BOX) % BOX) - BOX / 2;
+  w.scene.add(im);
+  w.elkFrame((dt, t, speler) => {
+    if (!speler) return;
+    blaadjes.forEach((b, i) => {
+      b.y -= b.v * dt;
+      if (b.y < 0) b.y += HOOG;
+      p.set(rond(b.x + Math.sin(t * 0.7 + b.f) * 1.5, speler.x), b.y, rond(b.z + Math.cos(t * 0.5 + b.f) * 1.5, speler.z));
+      q.setFromEuler(e.set(t * b.r1 + b.f, t * b.r2, Math.sin(t + b.f)));
+      m.compose(p, q, s);
+      im.setMatrixAt(i, m);
+    });
+    im.instanceMatrix.needsUpdate = true;
+  });
+}
+
 export function wolken(w, aantal = 12) {
-  const mat = new THREE.MeshLambertMaterial({ color: 0xffffff, emissive: 0xffffff, emissiveIntensity: 0.45, fog: false });
+  const mat = new THREE.MeshToonMaterial({ color: 0xffffff, emissive: 0xffffff, emissiveIntensity: 0.45, fog: false, gradientMap: toonVerloopKaart() });
+  mat.userData.outlineParameters = lijn(0xb8c4ff, 0.002);
   const rand = w.zicht;
   for (let i = 0; i < aantal; i++) {
     const wolk = groep((w.rng() * 2 - 1) * rand, w.tussen(40, 60), (w.rng() * 2 - 1) * rand);
@@ -585,7 +615,7 @@ export function omheining(w, soort = 'heg', kleur) {
       w.scene.add(heg);
     }
     const per = Math.round(L / 1.6);
-    const im = instanties(new THREE.SphereGeometry(1, 10, 8), materiaal(k), per * 4, true);
+    const im = instanties(new THREE.SphereGeometry(1, 10, 8), materiaal(k, { rand: false }), per * 4, true);
     let i = 0;
     for (const [x, z, r] of zijden) {
       for (let j = 0; j < per; j++) {
@@ -600,7 +630,7 @@ export function omheining(w, soort = 'heg', kleur) {
     const per = Math.round(L / 2.5);
     const geo = new THREE.BoxGeometry(0.22, 1.4, 0.22);
     geo.translate(0, 0.7, 0);
-    const palen = instanties(geo, materiaal(k), per * 4 + 4, true);
+    const palen = instanties(geo, materiaal(k, { rand: false }), per * 4 + 4, true);
     let i = 0;
     for (const [x, z, r] of zijden) {
       for (let j = 0; j <= per; j++) {

@@ -17,7 +17,7 @@ export default {
     const kop = groep();
     g.add(kop);
     for (const s of [-1, 1]) kop.add(bol(groen, 0.14, [s * 0.18, 0.6, 0.18]));
-    ogen(kop, 0.18, 0.62, 0.25, 0.09);
+    ogen(kop, 0.18, 0.62, 0.25, 0.121);
     const mond = torus(0xb71c1c, 0.2, 0.02, [0, 0.4, 0.37], Math.PI);
     mond.rotation.z = Math.PI;
     kop.add(mond);
