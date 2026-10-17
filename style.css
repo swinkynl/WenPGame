@@ -1,0 +1,375 @@
+:root {
+  --geel: #ffcf33;
+  --geel-donker: #d9a400;
+  --paars: #8e6cff;
+  --paars-donker: #5a3fc0;
+  --tekst: #3b2a5a;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  background: #cfe8ff;
+  font-family: 'Fredoka', ui-rounded, 'Arial Rounded MT Bold', system-ui, sans-serif;
+  color: var(--tekst);
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: none;
+}
+
+#spel {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  touch-action: none;
+}
+
+.verborgen { display: none !important; }
+
+button { font: inherit; cursor: pointer; }
+
+/* ---------- Schermen (menu, laden, gewonnen) ---------- */
+
+.scherm {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding: max(20px, env(safe-area-inset-top)) 16px max(20px, env(safe-area-inset-bottom));
+  overflow-y: auto;
+  text-align: center;
+  touch-action: pan-y;
+}
+
+#menu, #laden {
+  background: linear-gradient(160deg, #ffe1f1 0%, #e3d7ff 45%, #c9f0ff 100%);
+}
+
+h1 {
+  font-size: clamp(32px, 6vw, 60px);
+  margin: 0;
+  color: #fff;
+  text-shadow: 0 4px 0 var(--paars), 0 8px 18px rgba(80, 40, 160, .35);
+}
+
+h2 {
+  font-size: clamp(20px, 3vw, 28px);
+  margin: 8px 0 0;
+}
+
+.sub {
+  font-size: clamp(18px, 2.6vw, 24px);
+  margin: 0;
+  max-width: 640px;
+}
+
+.kaarten {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.kaart {
+  width: min(240px, 42vw);
+  padding: 16px 12px;
+  border-radius: 26px;
+  border: 5px solid transparent;
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  box-shadow: 0 8px 0 rgba(0, 0, 0, .12);
+  transition: transform .15s;
+}
+
+.kaart.gekozen {
+  border-color: #fff;
+  transform: translateY(-4px) scale(1.04);
+  box-shadow: 0 0 0 5px var(--paars), 0 12px 20px rgba(0, 0, 0, .2);
+}
+
+.kaart .emoji { font-size: 60px; line-height: 1.1; }
+.kaart .naam { font-size: 24px; font-weight: 700; text-shadow: 0 2px 0 rgba(0, 0, 0, .2); }
+.kaart .uitleg { font-size: 15px; text-shadow: 0 1px 0 rgba(0, 0, 0, .2); }
+
+.keuzes { display: flex; gap: 14px; }
+
+.keuze {
+  width: 76px;
+  height: 76px;
+  border-radius: 50%;
+  border: none;
+  font-size: 32px;
+  font-weight: 700;
+  background: #fff;
+  color: var(--paars);
+  box-shadow: 0 6px 0 #d6c8ff;
+}
+
+.keuze.gekozen {
+  background: var(--paars);
+  color: #fff;
+  box-shadow: 0 6px 0 var(--paars-donker);
+}
+
+.schakelaar {
+  font-size: 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(255, 255, 255, .75);
+  padding: 10px 20px;
+  border-radius: 999px;
+}
+
+.schakelaar input { width: 28px; height: 28px; accent-color: var(--paars); }
+
+.grote-knop {
+  font-size: 32px;
+  font-weight: 700;
+  padding: 14px 48px;
+  border: none;
+  border-radius: 999px;
+  background: var(--geel);
+  color: #6b4a00;
+  box-shadow: 0 8px 0 var(--geel-donker);
+  margin-top: 6px;
+}
+
+.grote-knop:active { transform: translateY(4px); box-shadow: 0 4px 0 var(--geel-donker); }
+
+.knop {
+  font-size: 20px;
+  padding: 10px 28px;
+  border: none;
+  border-radius: 999px;
+  background: #fff;
+  color: var(--paars);
+  box-shadow: 0 5px 0 #d6c8ff;
+}
+
+.laad-hond { font-size: 90px; animation: hup .6s ease-in-out infinite alternate; }
+
+@keyframes hup { to { transform: translateY(-24px) rotate(-8deg); } }
+
+#gewonnen {
+  background: rgba(255, 235, 250, .5);
+  -webkit-backdrop-filter: blur(3px);
+  backdrop-filter: blur(3px);
+}
+
+#gewonnen-vriendjes { font-size: clamp(40px, 7vw, 64px); letter-spacing: 6px; }
+
+.confetti {
+  position: fixed;
+  top: -24px;
+  width: 12px;
+  height: 18px;
+  border-radius: 3px;
+  pointer-events: none;
+  animation: val linear forwards;
+}
+
+@keyframes val { to { transform: translateY(115vh) rotate(800deg); } }
+
+/* ---------- HUD ---------- */
+
+#hud { position: fixed; inset: 0; pointer-events: none; }
+#hud button { pointer-events: auto; }
+
+#teller {
+  position: absolute;
+  top: max(12px, env(safe-area-inset-top));
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(255, 255, 255, .9);
+  border-radius: 999px;
+  padding: 8px 18px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, .15);
+  white-space: nowrap;
+}
+
+#teller-tekst { font-size: 26px; font-weight: 700; }
+#teller-vriendjes { display: flex; gap: 5px; }
+
+.plekje {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: #e7e0f5;
+  color: #b7a9d6;
+  display: grid;
+  place-items: center;
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.plekje.gevonden { background: #fff3b0; animation: plop .5s; }
+
+@keyframes plop {
+  0% { transform: scale(.3); }
+  60% { transform: scale(1.4); }
+  100% { transform: scale(1); }
+}
+
+.ronde-knop {
+  position: absolute;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255, 255, 255, .88);
+  font-size: 30px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, .2);
+}
+
+#knop-huis {
+  top: max(12px, env(safe-area-inset-top));
+  left: max(12px, env(safe-area-inset-left));
+}
+
+#knop-spring {
+  right: max(28px, env(safe-area-inset-right));
+  bottom: max(28px, env(safe-area-inset-bottom));
+  width: 100px;
+  height: 100px;
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--paars);
+}
+
+#knop-spring:active { transform: scale(.92); }
+
+#neus {
+  position: absolute;
+  top: max(12px, env(safe-area-inset-top));
+  right: max(12px, env(safe-area-inset-right));
+  background: rgba(255, 255, 255, .9);
+  border-radius: 999px;
+  padding: 6px 16px 6px 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, .15);
+}
+
+#neus-icoon {
+  font-size: 30px;
+  display: inline-block;
+  animation: snuffel var(--tempo, 2s) ease-in-out infinite;
+}
+
+@keyframes snuffel {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.25); }
+}
+
+#neus-balk {
+  width: 100px;
+  height: 16px;
+  border-radius: 99px;
+  background: #e3e3f0;
+  overflow: hidden;
+}
+
+#neus-vulling {
+  height: 100%;
+  width: 0%;
+  border-radius: 99px;
+  transition: width .3s, background-color .3s;
+}
+
+#neus-tekst { font-size: 18px; font-weight: 700; min-width: 54px; }
+
+#melding {
+  position: absolute;
+  top: 20%;
+  left: 50%;
+  width: 92vw;
+  transform: translateX(-50%);
+  font-size: clamp(26px, 4.5vw, 46px);
+  font-weight: 700;
+  color: #fff;
+  text-shadow: 0 3px 0 var(--paars), 0 6px 14px rgba(0, 0, 0, .3);
+  text-align: center;
+  opacity: 0;
+  transition: opacity .4s;
+}
+
+#melding.zichtbaar { opacity: 1; animation: wip .5s; }
+
+@keyframes wip {
+  0% { transform: translateX(-50%) scale(.5); }
+  70% { transform: translateX(-50%) scale(1.1); }
+  100% { transform: translateX(-50%) scale(1); }
+}
+
+#uitleg {
+  position: absolute;
+  bottom: max(16px, env(safe-area-inset-bottom));
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(40, 20, 80, .55);
+  color: #fff;
+  padding: 10px 18px;
+  border-radius: 16px;
+  font-size: 18px;
+  text-align: center;
+  width: max-content;
+  max-width: 60vw;
+  transition: opacity 1.2s;
+}
+
+#uitleg.weg { opacity: 0; }
+
+#joystick {
+  position: absolute;
+  left: 120px;
+  top: calc(100% - 140px);
+  width: 130px;
+  height: 130px;
+  margin: -65px 0 0 -65px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, .25);
+  border: 3px solid rgba(255, 255, 255, .7);
+  opacity: .6;
+}
+
+#joystick.actief { opacity: 1; }
+
+#joystick-knop {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 60px;
+  height: 60px;
+  margin: -30px 0 0 -30px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, .92);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, .25);
+}
+
+body:not(.touch) .alleen-touch { display: none; }
+
+@media (max-width: 700px) {
+  .plekje { width: 28px; height: 28px; font-size: 18px; }
+  #teller-tekst { font-size: 20px; }
+  #neus-balk { width: 60px; }
+  #neus-tekst { display: none; }
+  #teller { top: calc(max(12px, env(safe-area-inset-top)) + 72px); }
+}

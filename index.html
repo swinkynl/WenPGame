@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Vriendjes">
+  <title>Waar zijn de vriendjes?</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;700&display=swap">
+  <link rel="stylesheet" href="style.css">
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+<body>
+  <canvas id="spel"></canvas>
+
+  <!-- Tijdens het spelen -->
+  <div id="hud" class="verborgen">
+    <button id="knop-huis" class="ronde-knop" aria-label="Terug naar het menu">🏠</button>
+    <div id="teller">
+      <span id="teller-tekst">0 / 0</span>
+      <div id="teller-vriendjes"></div>
+    </div>
+    <div id="neus">
+      <span id="neus-icoon">👃</span>
+      <div id="neus-balk"><div id="neus-vulling"></div></div>
+      <span id="neus-tekst">koud</span>
+    </div>
+    <div id="melding"></div>
+    <div id="uitleg"></div>
+    <div id="joystick" class="alleen-touch"><div id="joystick-knop"></div></div>
+    <button id="knop-spring" class="ronde-knop alleen-touch" aria-label="Springen">Hop!</button>
+  </div>
+
+  <!-- Startmenu -->
+  <div id="menu" class="scherm">
+    <h1>Waar zijn de vriendjes?</h1>
+    <p class="sub">Help het gele hondje om alle verstopte vriendjes te vinden!</p>
+    <h2>Kies een plek</h2>
+    <div id="gebieden" class="kaarten"></div>
+    <h2>Hoeveel vriendjes?</h2>
+    <div id="aantallen" class="keuzes"></div>
+    <label class="schakelaar"><input type="checkbox" id="hulp-neus" checked> Snuffelneus helpt zoeken</label>
+    <button id="knop-start" class="grote-knop">Spelen! 🐶</button>
+  </div>
+
+  <!-- Laden -->
+  <div id="laden" class="scherm verborgen">
+    <div class="laad-hond">🐶</div>
+    <p class="sub">Vriendjes gaan zich verstoppen...</p>
+  </div>
+
+  <!-- Gewonnen -->
+  <div id="gewonnen" class="scherm verborgen">
+    <h1>Hoera! 🎉</h1>
+    <p id="gewonnen-tekst" class="sub"></p>
+    <div id="gewonnen-vriendjes"></div>
+    <button id="knop-opnieuw" class="grote-knop">Nog een keer!</button>
+    <button id="knop-menu" class="knop">Andere plek kiezen</button>
+  </div>
+
+  <script type="module" src="src/main.js"></script>
+</body>
+</html>
