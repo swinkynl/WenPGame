@@ -48,6 +48,9 @@ Three.js wordt van internet geladen, dus het spel heeft internet nodig.
    Zet `g.userData.kop` en `g.userData.staart`, dan bewegen die vanzelf.
 3. Zet het in `src/vriendjes/index.js` en zet de `id` in de `vriendjes`-lijst van een gebied.
 
+Voor een kawaii-diertje (mollig lijfje, groot koppie) begin je het makkelijkst met `chibi()` uit
+`src/vriendjes/chibi.js`, zoals de bosdiertjes (bijvoorbeeld `vos.js`). Met `dicht: true` krijgt het blije dichte oogjes (^^).
+
 Heb je een 3D-model als `.glb`-bestand (bijvoorbeeld uit Blender)? Zet het in een map `modellen/` en gebruik:
 
 ```js
@@ -62,6 +65,9 @@ export default { id: 'draak', naam: 'Draakje Vuur', emoji: '🐉', model: 'model
    - `w.verspreid((w) => D.boom(w), 40)`: veertig keer op willekeurige plekken
    - `D.pad(...)`, `D.maisveld(...)`, `D.weide(...)`, `D.bloemen(...)`: zie `src/decor.js`
 3. Zet het in `src/gebieden/index.js`. Het verschijnt dan vanzelf in het menu.
+
+Wil je heuvels? Geef het gebied een functie `hoogte(x, z)` die de hoogte van de grond teruggeeft
+(zie `src/gebieden/bos.js`). Gebruik dan `D.omheining(w, 'bomen')` als rand, want heg en hek zijn alleen voor vlakke grond.
 
 Vriendjes verstoppen zich op plekjes die het decor zelf aangeeft (`userData.verstop`): achter bomen,
 in struiken, naast gebouwen en in maisvelden. Elk spel kiest willekeurig andere plekjes en andere vriendjes.

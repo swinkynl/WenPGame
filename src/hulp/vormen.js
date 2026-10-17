@@ -153,12 +153,21 @@ export function groep(x = 0, y = 0, z = 0) {
 
 // Twee grote anime-ogen (iris, pupil, glimlichtjes, ooglid) met blosjes eronder.
 // x: afstand van het midden, y/z: positie op het gezicht, r: grootte
-export function ogen(ouder, x, y, z, r = 0.08, irisKleur = 0x5a2d1a, { blos = true } = {}) {
+// dicht: true geeft blije dichte oogjes (^^)
+export function ogen(ouder, x, y, z, r = 0.08, irisKleur = 0x5a2d1a, { blos = true, dicht = false } = {}) {
   const geen = { rand: false };
   const glim = { rand: false, gloed: 0.6 };
   for (const s of [-1, 1]) {
     const oog = groep(s * x, y, z);
     oog.rotation.y = s * 0.28;
+    if (dicht) {
+      const boogje = torus(0x2b160c, r * 0.6, r * 0.14, [0, -r * 0.3, r * 0.3], Math.PI, geen);
+      boogje.scale.set(r * 0.6, r * 0.75, r * 0.6);
+      oog.add(boogje);
+      if (blos) oog.add(bol(0xff8fab, r * 0.55, [s * r * 0.35, -r * 1.25, r * 0.1], [1.3, 0.65, 0.3], { rand: false, doorzichtig: 0.7 }));
+      ouder.add(oog);
+      continue;
+    }
     oog.add(bol(0xffffff, r, [0, 0, 0], [0.85, 1.15, 0.5], geen));
     oog.add(bol(irisKleur, r * 0.78, [0, -r * 0.05, r * 0.18], [0.85, 1.12, 0.5], geen));
     oog.add(bol(0x1a0d08, r * 0.42, [0, -r * 0.08, r * 0.4], [0.9, 1.1, 0.5], geen));

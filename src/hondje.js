@@ -80,6 +80,7 @@ export class Hondje {
     this.snelheid = new THREE.Vector2();
     this.vy = 0;
     this.opGrond = true;
+    this.grondY = 0;
     this.fase = 0;
     this.tijd = 0;
     this.blijTimer = 0;
@@ -127,13 +128,19 @@ export class Hondje {
     if (v > 0.5) this.hoek = draaiNaar(this.hoek, Math.atan2(this.snelheid.x, this.snelheid.y), dt * 12);
     this.groep.rotation.y = this.hoek;
 
-    // springen
-    this.vy -= ZWAARTEKRACHT * dt;
-    this.positie.y += this.vy * dt;
-    if (this.positie.y <= 0) {
-      this.positie.y = 0;
-      this.vy = 0;
-      this.opGrond = true;
+    // over heuvels lopen en springen
+    const grond = wereld.hoogte(this.positie.x, this.positie.z);
+    this.grondY = grond;
+    if (this.opGrond) {
+      this.positie.y = grond;
+    } else {
+      this.vy -= ZWAARTEKRACHT * dt;
+      this.positie.y += this.vy * dt;
+      if (this.positie.y <= grond) {
+        this.positie.y = grond;
+        this.vy = 0;
+        this.opGrond = true;
+      }
     }
 
     this.animeer(dt, v);

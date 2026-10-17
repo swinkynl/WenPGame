@@ -70,7 +70,7 @@ function startSpel(keuze) {
     gekozen = gekozen.slice(0, plekken.length);
     const vriendjes = gekozen.map((def, i) => {
       const v = new Vriendje(def);
-      v.plaats(plekken[i]);
+      v.plaats({ ...plekken[i], y: wereld.hoogte(plekken[i].x, plekken[i].z) });
       wereld.scene.add(v.groep);
       return v;
     });
@@ -129,6 +129,7 @@ function lus(nu) {
   spel.tijd += dt;
   const t = spel.tijd;
   const { wereld, hond } = spel;
+  const hoogte = (x, z) => wereld.hoogte(x, z);
   const zoeken = spel.fase === 'zoeken';
 
   const beweging = zoeken ? invoer.beweging() : { x: 0, y: 0 };
@@ -163,9 +164,9 @@ function lus(nu) {
       if (v.toestand === 'volgen') v.feest();
       const a = (i / spel.volgers.length) * Math.PI * 2;
       tmp.set(hond.positie.x + Math.sin(a) * 3, 0, hond.positie.z + Math.cos(a) * 3);
-      v.update(dt, t, tmp, hond.positie);
+      v.update(dt, t, tmp, hond.positie, hoogte);
     } else {
-      v.update(dt, t, i === 0 ? hond.positie : spel.volgers[i - 1].groep.position, hond.positie);
+      v.update(dt, t, i === 0 ? hond.positie : spel.volgers[i - 1].groep.position, hond.positie, hoogte);
     }
   });
 
@@ -186,6 +187,7 @@ function lus(nu) {
   volgCamera.update(dt, hond, invoer, beweging, {
     autoVolgen: zoeken,
     extraDraai: spel.fase === 'feest' ? dt * 0.35 : 0,
+    hoogte,
   });
   wereld.update(dt, t, hond.positie, camera);
   if (spel.hulpNeus) UI.neus(dichtsbij);

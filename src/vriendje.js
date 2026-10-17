@@ -11,7 +11,7 @@ export class Vriendje {
     this.groep.add(this.model);
     // chibi-stijl: grotere koppies
     const kop = this.model.userData.kop;
-    if (kop && kop.position.y > 0) kop.scale.multiplyScalar(1.22);
+    if (kop && kop.position.y > 0 && !this.model.userData.chibi) kop.scale.multiplyScalar(1.22);
     this.toestand = 'verstopt';
     this.fase = Math.random() * 10;
     this.timer = 0;
@@ -34,7 +34,7 @@ export class Vriendje {
   }
 
   plaats(p) {
-    this.groep.position.set(p.x, 0, p.z);
+    this.groep.position.set(p.x, p.y ?? 0, p.z);
     this.groep.rotation.y = Math.random() * Math.PI * 2;
   }
 
@@ -53,7 +53,7 @@ export class Vriendje {
   }
 
   // doel: positie om naartoe te lopen, hond: positie van het hondje
-  update(dt, t, doel, hond) {
+  update(dt, t, doel, hond, hoogte = () => 0) {
     const m = this.model, ud = m.userData;
     if (ud.kop) ud.kop.rotation.y = Math.sin(t * 0.9 + this.fase) * 0.45;
     if (ud.staart) ud.staart.rotation.z = Math.sin(t * (this.toestand === 'verstopt' ? 3 : 10) + this.fase) * 0.35;
@@ -93,6 +93,7 @@ export class Vriendje {
       pos.z += (dz / d) * v * dt;
       this.groep.rotation.y = draaiNaar(this.groep.rotation.y, Math.atan2(dx, dz), dt * 10);
     }
+    pos.y = hoogte(pos.x, pos.z);
     if (v > 0.4) {
       this.loopFase += dt * 13;
       m.position.y = Math.abs(Math.sin(this.loopFase)) * 0.3;

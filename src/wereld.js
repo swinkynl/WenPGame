@@ -16,6 +16,7 @@ export class Wereld {
     this.bezet = [];
     this.verstopplekken = [];
     this.updaters = [];
+    this.hoogteFn = gebied.hoogte ? gebied.hoogte.bind(gebied) : null;
 
     this.maakLuchtEnLicht();
     this.maakGrond();
@@ -28,14 +29,21 @@ export class Wereld {
   kies(lijst) { return lijst[Math.floor(this.rng() * lijst.length)]; }
   kans(p) { return this.rng() < p; }
 
+  // Hoogte van de grond (heuvels). Een gebied kan een functie hoogte(x, z) hebben.
+  hoogte(x, z) {
+    if (!this.hoogteFn) return 0;
+    const m = this.half;
+    return this.hoogteFn(Math.max(-m, Math.min(m, x)), Math.max(-m, Math.min(m, z)));
+  }
+
   // ---------- dingen neerzetten ----------
 
   // Zet een model neer. Het model kan in userData vertellen:
   //   botsers: [{x, z, r}] of [{x, z, b, d}]  -> waar je niet doorheen kunt lopen
   //   verstop: [[x, z], ...]                    -> plekjes waar een vriendje zich kan verstoppen
   //   ruimte: getal                             -> hoeveel plek het inneemt
-  //   update: (dt, tijd) => {}                  -> voor bewegende dingen (molenwieken)
-  plaats(obj, x, z, { draai = this.rng() * Math.PI * 2, schaal = 1, y = 0 } = {}) {
+  //   update: (dt, tijd, speler) => {}          -> voor bewegende dingen (molenwieken)
+  plaats(obj, x, z, { draai = this.rng() * Math.PI * 2, schaal = 1, y = this.hoogte(x, z) - (this.hoogteFn ? 0.15 : 0) } = {}) {
     obj.position.set(x, y, z);
     obj.rotation.y = draai;
     obj.scale.setScalar(schaal);
@@ -252,7 +260,9 @@ export class Wereld {
       kleuren.push(c.r, c.g, c.b);
       // heuvels buiten de rand
       const buiten = Math.max(Math.abs(x), Math.abs(z)) - (this.half + 8);
-      if (buiten > 0) pos.setY(i, buiten * 0.3 * (1 + Math.sin(x * 0.08) * Math.cos(z * 0.07) * 0.6));
+      let y = this.hoogte(x, z);
+      if (buiten > 0) y += buiten * 0.3 * (1 + Math.sin(x * 0.08) * Math.cos(z * 0.07) * 0.6);
+      pos.setY(i, y);
     }
     geo.setAttribute('color', new THREE.Float32BufferAttribute(kleuren, 3));
     geo.computeVertexNormals();

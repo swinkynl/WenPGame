@@ -10,5 +10,14 @@ import uil from './uil.js';
 import eenhoorn from './eenhoorn.js';
 import schaap from './schaap.js';
 import kip from './kip.js';
+// bosdiertjes (kawaii)
+import wasbeer from './wasbeer.js';
+import wolf from './wolf.js';
+import hert from './hert.js';
+import bever from './bever.js';
+import vos from './vos.js';
+import egel from './egel.js';
+import eekhoorn from './eekhoorn.js';
 
-export const VRIENDJES = [kat, konijn, varken, koe, eend, kikker, beer, uil, eenhoorn, schaap, kip];
+export const VRIENDJES = [kat, konijn, varken, koe, eend, kikker, beer, uil, eenhoorn, schaap, kip,
+  wasbeer, wolf, hert, bever, vos, egel, eekhoorn];

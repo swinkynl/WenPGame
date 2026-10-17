@@ -439,6 +439,7 @@ export function maisveld(w, { x, z, b, d }) {
   for (let ix = 0; ix < nx; ix++) {
     for (let iz = 0; iz < nz; iz++) {
       p.set(x - b / 2 + (ix + 0.5) * stap + w.tussen(-0.3, 0.3), 0, z - d / 2 + (iz + 0.5) * stap + w.tussen(-0.3, 0.3));
+      p.y = w.hoogte(p.x, p.z) - 0.1;
       q.setFromAxisAngle(as, w.rng() * Math.PI * 2);
       const sc = w.tussen(0.85, 1.15);
       s.set(sc, sc, sc);
@@ -472,7 +473,7 @@ export function bloemen(w, aantal, kleuren) {
       const x = cx + w.tussen(-2.5, 2.5), z = cz + w.tussen(-2.5, 2.5);
       if (!w.isVrij(x, z, 0.3)) continue;
       const s = w.tussen(0.7, 1.4);
-      m.makeScale(s, s, s).setPosition(x, 0, z);
+      m.makeScale(s, s, s).setPosition(x, w.hoogte(x, z) - 0.02, z);
       stelen.setMatrixAt(i, m);
       koppen.setMatrixAt(i, m);
       koppen.setColorAt(i, kleur.setHex(w.kies([k, k, w.kies(kleuren)])));
@@ -490,7 +491,8 @@ export function gras(w, aantal, kleur = 0x5cb85c) {
   const m = new THREE.Matrix4(), c = new THREE.Color(kleur), k = new THREE.Color();
   for (let i = 0; i < aantal; i++) {
     const s = w.tussen(0.6, 1.4);
-    m.makeScale(s, s * w.tussen(0.8, 1.6), s).setPosition((w.rng() * 2 - 1) * (w.half - 2), 0, (w.rng() * 2 - 1) * (w.half - 2));
+    const x = (w.rng() * 2 - 1) * (w.half - 2), z = (w.rng() * 2 - 1) * (w.half - 2);
+    m.makeScale(s, s * w.tussen(0.8, 1.6), s).setPosition(x, w.hoogte(x, z) - 0.05, z);
     im.setMatrixAt(i, m);
     im.setColorAt(i, k.copy(c).offsetHSL(0, 0, w.tussen(-0.08, 0.06)));
   }
@@ -507,9 +509,12 @@ export function pad(w, punten, breedte = 2.5, kleur = 0xe8d3a2) {
   const geo = new THREE.CircleGeometry(breedte / 2, 16);
   geo.rotateX(-Math.PI / 2);
   const im = instanties(geo, materiaal(kleur, { vlak: true }), plekken.length);
-  const m = new THREE.Matrix4();
+  const m = new THREE.Matrix4(), q = new THREE.Quaternion(), n = new THREE.Vector3(), p = new THREE.Vector3();
+  const omhoog = new THREE.Vector3(0, 1, 0), een = new THREE.Vector3(1, 1, 1), e = 0.5;
   plekken.forEach(([x, z], i) => {
-    m.makeTranslation(x, 0.02, z);
+    n.set(w.hoogte(x - e, z) - w.hoogte(x + e, z), 2 * e, w.hoogte(x, z - e) - w.hoogte(x, z + e)).normalize();
+    q.setFromUnitVectors(omhoog, n);
+    m.compose(p.set(x, w.hoogte(x, z) + 0.03, z), q, een);
     im.setMatrixAt(i, m);
   });
   w.scene.add(im);
@@ -529,7 +534,8 @@ export function vuurvliegjes(w, aantal = 300, kleur = 0xfff59d) {
 
   const pos = new Float32Array(aantal * 3), basis = [];
   for (let i = 0; i < aantal; i++) {
-    basis.push({ x: (w.rng() * 2 - 1) * w.half, y: w.tussen(0.6, 3.5), z: (w.rng() * 2 - 1) * w.half, f: w.rng() * 10 });
+    const x = (w.rng() * 2 - 1) * w.half, z = (w.rng() * 2 - 1) * w.half;
+    basis.push({ x, y: w.hoogte(x, z) + w.tussen(0.6, 3.5), z, f: w.rng() * 10 });
   }
   const geo = new THREE.BufferGeometry();
   geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
@@ -570,7 +576,7 @@ export function bloesem(w, aantal = 220, kleuren = [0xffb7c9, 0xff9eb8, 0xffd1dc
     blaadjes.forEach((b, i) => {
       b.y -= b.v * dt;
       if (b.y < 0) b.y += HOOG;
-      p.set(rond(b.x + Math.sin(t * 0.7 + b.f) * 1.5, speler.x), b.y, rond(b.z + Math.cos(t * 0.5 + b.f) * 1.5, speler.z));
+      p.set(rond(b.x + Math.sin(t * 0.7 + b.f) * 1.5, speler.x), speler.y - 2 + b.y, rond(b.z + Math.cos(t * 0.5 + b.f) * 1.5, speler.z));
       q.setFromEuler(e.set(t * b.r1 + b.f, t * b.r2, Math.sin(t + b.f)));
       m.compose(p, q, s);
       im.setMatrixAt(i, m);
@@ -602,12 +608,18 @@ export function wolken(w, aantal = 12) {
   }
 }
 
-// Rand om het hele gebied: 'heg' of 'hek'
+// Rand om het hele gebied: 'heg', 'hek' of 'bomen' (bomen werkt ook op heuvels)
 export function omheining(w, soort = 'heg', kleur) {
   const h = w.half, L = w.gebied.grootte;
   const zijden = [[0, h, 0], [0, -h, 0], [h, 0, Math.PI / 2], [-h, 0, Math.PI / 2]];
   const m = new THREE.Matrix4();
-  if (soort === 'heg') {
+  if (soort === 'bomen') {
+    for (const [x, z, r] of zijden) {
+      for (let t = -h; t <= h; t += 3.2) {
+        w.plaats(dennenboom(w), (r ? x : t) + w.tussen(-0.8, 0.8), (r ? t : z) + w.tussen(-0.8, 0.8), { schaal: w.tussen(1.1, 1.6) });
+      }
+    }
+  } else if (soort === 'heg') {
     const k = kleur ?? 0x3f8f4a;
     for (const [x, z, r] of zijden) {
       const heg = doos(k, [L + 2, 2.4, 1.8], [x, 1.2, z]);
@@ -647,4 +659,235 @@ export function omheining(w, soort = 'heg', kleur) {
     palen.count = i;
     w.scene.add(palen);
   }
+}
+
+// ======================= Japanse tuin =======================
+
+export function sakura(w) {
+  const g = groep();
+  const stam = 0x6b4040;
+  g.add(cilinder(stam, 0.25, 0.4, 1.6, [0, 0.8, 0], 8));
+  const tak1 = cilinder(stam, 0.14, 0.22, 1.6, [0.35, 2.1, 0], 8);
+  tak1.rotation.z = -0.45;
+  g.add(tak1);
+  const tak2 = cilinder(stam, 0.11, 0.19, 1.4, [-0.4, 2.0, 0.1], 8);
+  tak2.rotation.z = 0.55;
+  g.add(tak2);
+  const roze = [0xffc4d8, 0xffb0cb, 0xffd9e6, 0xffe9f0];
+  const wolkjes = [[0.9, 3.0, 0, 1.3], [-0.9, 2.9, 0.2, 1.2], [0, 3.6, 0, 1.4], [0.4, 3.1, 1, 1.0], [-0.3, 3.2, -1, 1.1], [1.7, 2.7, -0.4, 0.8], [-1.7, 2.6, 0.5, 0.8]];
+  for (const [x, y, z, r] of wolkjes) g.add(bol(w.kies(roze), r, [x, y, z], [1, 0.8, 1]));
+  g.add(schijf(0xffd3df, 2.5, [0, 0.03, 0])); // gevallen blaadjes
+  return info(g, [{ r: 0.45 }], rondom(1.5, 3, w.rng() * 6), 2.4);
+}
+
+export function torii() {
+  const g = groep();
+  const rood = 0xe0402f, zwart = 0x2e2626;
+  for (const s of [-1, 1]) {
+    g.add(cilinder(rood, 0.22, 0.26, 4.2, [s * 2.4, 2.1, 0], 12));
+    g.add(cilinder(zwart, 0.3, 0.3, 0.4, [s * 2.4, 0.2, 0], 12));
+    const punt = doos(zwart, [0.9, 0.28, 0.7], [s * 3.85, 4.58, 0]);
+    punt.rotation.z = s * 0.3;
+    g.add(punt);
+  }
+  g.add(doos(rood, [5.6, 0.3, 0.35], [0, 3.3, 0]));
+  g.add(doos(rood, [6.4, 0.35, 0.5], [0, 4.15, 0]));
+  g.add(doos(zwart, [7.0, 0.3, 0.7], [0, 4.45, 0]));
+  g.add(doos(rood, [0.3, 0.8, 0.3], [0, 3.75, 0]));
+  return info(g, [{ x: -2.4, r: 0.35 }, { x: 2.4, r: 0.35 }], [[-3.3, 0.9], [3.3, -0.9]], 3.8);
+}
+
+export function steenlantaarn() {
+  const g = groep();
+  const steen = 0xbdb6ad;
+  g.add(cilinder(steen, 0.45, 0.55, 0.3, [0, 0.15, 0], 6));
+  g.add(cilinder(steen, 0.16, 0.2, 1.0, [0, 0.8, 0], 8));
+  g.add(cilinder(steen, 0.42, 0.3, 0.2, [0, 1.38, 0], 6));
+  g.add(doos(0xfff1a8, [0.42, 0.4, 0.42], [0, 1.68, 0], { gloed: 0.9 }));
+  for (const x of [-0.24, 0.24]) for (const z of [-0.24, 0.24]) g.add(doos(steen, [0.09, 0.42, 0.09], [x, 1.68, z]));
+  g.add(kegel(steen, 0.62, 0.45, [0, 2.1, 0], 6));
+  g.add(bol(steen, 0.1, [0, 2.4, 0]));
+  return info(g, [{ r: 0.5 }], rondom(1.3, 2, 0.5), 1.0);
+}
+
+export function bamboe(w) {
+  const g = groep();
+  const n = 7 + Math.floor(w.rng() * 5);
+  for (let i = 0; i < n; i++) {
+    const a = w.rng() * Math.PI * 2, d = w.rng() * 1.4, h = w.tussen(4, 6.5);
+    const x = Math.cos(a) * d, z = Math.sin(a) * d;
+    g.add(cilinder(w.kies([0x7cb342, 0x8bc34a, 0x689f38]), 0.09, 0.11, h, [x, h / 2, z], 7));
+    for (let y = 1; y < h; y += 1.1) g.add(cilinder(0x558b2f, 0.125, 0.125, 0.06, [x, y, z], 7));
+    g.add(kegel(0x7cb342, 0.55, 1.1, [x, h, z], 5));
+  }
+  // geen botsing: je kunt tussen de stengels door, en een vriendje kan erin zitten
+  return info(g, [], [[0, 0]], 2);
+}
+
+export function pagode() {
+  const g = groep();
+  const rood = 0xd8483a, wit = 0xfaf3e6, dak = 0x3d3a4a;
+  g.add(doos(0xb0aaa0, [7, 0.6, 7], [0, 0.3, 0]));
+  let y = 0.6, b = 5;
+  for (let i = 0; i < 3; i++) {
+    const h = 2.4 - i * 0.3;
+    g.add(doos(rood, [b, h, b], [0, y + h / 2, 0]));
+    g.add(doos(wit, [b * 0.4, h * 0.45, 0.1], [0, y + h * 0.5, b / 2 + 0.02]));
+    const kap = kegel(dak, b * 0.98, 1.4, [0, y + h + 0.5, 0], 4);
+    kap.rotation.y = Math.PI / 4;
+    g.add(kap);
+    y += h + 0.9;
+    b *= 0.75;
+  }
+  g.add(cilinder(0xd4af37, 0.08, 0.12, 1.8, [0, y + 0.4, 0], 8, { gloed: 0.3 }));
+  return info(g, [{ b: 7, d: 7 }], [[4.6, 4.6], [-4.6, 4.6], [4.6, -4.6], [-4.6, -4.6], [0, -4.6]], 6);
+}
+
+// Vijver met zwemmende koi en een rood bruggetje erover
+export function koivijver(w, r = 6) {
+  const g = vijver(w, r);
+  const rood = 0xe0402f;
+  const n = 12, lengte = r * 2 + 2.4;
+  for (let i = 0; i < n; i++) {
+    const t0 = i / n - 0.5, t1 = (i + 1) / n - 0.5;
+    const y0 = Math.cos(t0 * Math.PI) * 1.4, y1 = Math.cos(t1 * Math.PI) * 1.4;
+    const x0 = t0 * lengte, x1 = t1 * lengte;
+    const stuk = Math.hypot(x1 - x0, y1 - y0) + 0.05, hoek = Math.atan2(y1 - y0, x1 - x0);
+    const plank = doos(0xc0392b, [stuk, 0.15, 1.6], [(x0 + x1) / 2, (y0 + y1) / 2 + 0.1, 0]);
+    plank.rotation.z = hoek;
+    g.add(plank);
+    for (const z of [-0.8, 0.8]) {
+      const leuning = doos(rood, [stuk, 0.1, 0.1], [(x0 + x1) / 2, (y0 + y1) / 2 + 0.85, z]);
+      leuning.rotation.z = hoek;
+      g.add(leuning);
+      if (i % 2 === 0) g.add(cilinder(rood, 0.06, 0.06, 0.8, [x0, y0 + 0.5, z], 6));
+    }
+  }
+  // koi
+  const vissen = groep();
+  vissen.userData.dynamisch = true;
+  const koiData = [];
+  for (let i = 0; i < 6; i++) {
+    const koi = groep();
+    const kleur = w.kies([0xff7a33, 0xffffff, 0xff9a52, 0xffd166]);
+    koi.add(bol(kleur, 0.28, [0, 0, 0], [0.5, 0.28, 1], { rand: false }));
+    koi.add(bol(0xffffff, 0.12, [0, 0.03, 0.08], [0.6, 0.3, 0.8], { rand: false }));
+    const staart = kegel(kleur, 0.14, 0.25, [0, 0, -0.32], 4, { rand: false });
+    staart.rotation.x = -Math.PI / 2;
+    koi.add(staart);
+    vissen.add(koi);
+    koiData.push({ koi, straal: w.tussen(1.5, r - 1.5), snelheid: w.tussen(0.3, 0.6) * (w.kans(0.5) ? 1 : -1), fase: w.rng() * 6 });
+  }
+  g.add(vissen);
+  g.userData.update = (dt, t) => {
+    for (const k of koiData) {
+      const a = t * k.snelheid + k.fase;
+      k.koi.position.set(Math.cos(a) * k.straal, 0.05, Math.sin(a) * k.straal);
+      // zwemrichting = afgeleide van de cirkel
+      k.koi.rotation.y = Math.atan2(-Math.sin(a) * k.snelheid, Math.cos(a) * k.snelheid);
+    }
+  };
+  return g;
+}
+
+// ======================= Bos =======================
+
+export function berk(w) {
+  const g = groep();
+  const h = w.tussen(3, 4.2);
+  g.add(cilinder(0xf4f1ea, 0.17, 0.22, h + 0.3, [0, h / 2 - 0.15, 0], 8));
+  for (let i = 0; i < 6; i++) {
+    const y = w.tussen(0.4, h - 0.3), a = w.rng() * Math.PI * 2;
+    const vlek = doos(0x3a3a3a, [0.14, 0.05, 0.05], [Math.cos(a) * 0.19, y, Math.sin(a) * 0.19], { rand: false });
+    vlek.rotation.y = -a;
+    g.add(vlek);
+  }
+  const groen = [0xa5d66f, 0x8fcf5f, 0xc2e07a];
+  g.add(bol(w.kies(groen), 1.1, [0, h + 0.6, 0], [0.9, 1.2, 0.9]));
+  g.add(bol(w.kies(groen), 0.8, [0.5, h + 0.1, 0.3]));
+  g.add(bol(w.kies(groen), 0.8, [-0.5, h + 0.3, -0.3]));
+  return info(g, [{ r: 0.3 }], rondom(1.2, 2, w.rng() * 6), 1.6);
+}
+
+export function boomstronk(w) {
+  const g = groep();
+  const r = w.tussen(0.45, 0.7);
+  g.add(cilinder(0x8d6e63, r, r * 1.15, 0.9, [0, 0.25, 0], 10));
+  g.add(cilinder(0xe8cfa6, r * 0.9, r * 0.9, 0.03, [0, 0.71, 0], 10));
+  g.add(bol(0xe53935, 0.12, [r * 0.9, 0.35, 0], [1, 0.5, 1]));
+  return info(g, [{ r: r * 1.1 }], rondom(r + 0.9, 3, w.rng() * 6), r + 0.6);
+}
+
+export function boomstam(w) {
+  const g = groep();
+  const L = w.tussen(3.5, 5);
+  const stam = cilinder(0x8d6e63, 0.45, 0.5, L, [0, 0.4, 0], 10);
+  stam.rotation.z = Math.PI / 2;
+  g.add(stam);
+  for (const s of [-1, 1]) {
+    const eind = cilinder(0xe8cfa6, 0.42, 0.42, 0.03, [s * L / 2, 0.4, 0], 10);
+    eind.rotation.z = Math.PI / 2;
+    g.add(eind);
+  }
+  g.add(bol(0x7cb342, 0.4, [-L * 0.15, 0.8, 0], [1.6, 0.35, 0.9]));
+  const tak = cilinder(0x8d6e63, 0.08, 0.12, 0.7, [L * 0.2, 0.9, 0.1], 6);
+  tak.rotation.z = -0.4;
+  g.add(tak);
+  return info(g, [{ b: L, d: 1.0 }], [[0, 1.2], [0, -1.2], [L / 2 + 0.8, 0]], L / 2);
+}
+
+export function varen(w) {
+  const g = groep();
+  for (let i = 0; i < 9; i++) {
+    const a = (i / 9) * Math.PI * 2 + w.rng() * 0.3;
+    const blad = kegel(w.kies([0x4caf50, 0x5cbf60, 0x43a047]), 0.2, 1.3, [Math.cos(a) * 0.5, 0.45, Math.sin(a) * 0.5], 4);
+    blad.rotation.set(Math.sin(a) * 1.0, 0, -Math.cos(a) * 1.0);
+    g.add(blad);
+  }
+  return info(g, [], [[0, 0]], 1.2);
+}
+
+export function paddenstoeltjes(w) {
+  const g = groep();
+  for (let i = 0; i < 3; i++) {
+    const h = w.tussen(0.25, 0.45), r = w.tussen(0.15, 0.25);
+    const x = w.tussen(-0.4, 0.4), z = w.tussen(-0.4, 0.4);
+    g.add(cilinder(0xfff3e0, 0.06, 0.08, h, [x, h / 2, z], 6));
+    g.add(halfbol(w.kies([0xe53935, 0xff7043, 0xb0763a]), r, [x, h, z], [1, 0.7, 1]));
+    g.add(bol(0xffffff, r * 0.2, [x + r * 0.3, h + r * 0.45, z], [1, 0.5, 1], { rand: false }));
+  }
+  return info(g, [], [], 0.6);
+}
+
+export function rotsblok(w) {
+  const g = groep();
+  const r = w.tussen(1.4, 2.2);
+  g.add(steenvorm(w.kies([0x9e9e9e, 0xa8a29a]), r, [0, r * 0.35, 0], [1, 0.75, 0.9]));
+  g.add(bol(0x7cb342, r * 0.55, [0, r * 0.85, 0], [1.2, 0.3, 1]));
+  return info(g, [{ r: r * 0.9 }], rondom(r + 0.9, 3, w.rng() * 6), r + 0.5);
+}
+
+export function blokhut() {
+  const g = groep();
+  const b = 6, h = 3, d = 5, hout = 0xb07a4f;
+  g.add(doos(0x9e9e9e, [b + 0.8, 2, d + 0.8], [0, -0.75, 0]));
+  g.add(doos(0x9a6640, [b - 0.2, h, d - 0.2], [0, h / 2, 0]));
+  for (let y = 0.25; y < h; y += 0.5) {
+    for (const s of [-1, 1]) {
+      const voor = cilinder(hout, 0.25, 0.25, b + 0.5, [0, y, s * d / 2], 8);
+      voor.rotation.z = Math.PI / 2;
+      g.add(voor);
+      const zij = cilinder(hout, 0.25, 0.25, d + 0.5, [s * b / 2, y, 0], 8);
+      zij.rotation.x = Math.PI / 2;
+      g.add(zij);
+    }
+  }
+  const dak = zadeldak(b + 0.4, d + 0.8, 2.2, hout, 0x6d4c41);
+  dak.position.y = h;
+  g.add(dak);
+  g.add(doos(0x5d4037, [1, 1.9, 0.15], [0, 0.95, d / 2 + 0.27]));
+  for (const x of [-1.8, 1.8]) g.add(doos(0xfff1a8, [0.8, 0.7, 0.12], [x, 1.6, d / 2 + 0.27], { gloed: 0.5 }));
+  g.add(doos(0x9e9e9e, [0.7, 2, 0.7], [1.8, h + 1.6, -1]));
+  const verstop = [[b / 2 + 1.2, d / 2 + 1.2], [-b / 2 - 1.2, d / 2 + 1.2], [b / 2 + 1.2, -d / 2 - 1.2], [-b / 2 - 1.2, -d / 2 - 1.2], [0, -d / 2 - 1.2]];
+  return info(g, [{ b: b + 0.5, d: d + 0.5 }], verstop, 5);
 }

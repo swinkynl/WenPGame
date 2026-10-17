@@ -17,10 +17,10 @@ export class VolgCamera {
     this.yaw = hond.hoek + Math.PI;
     this.pitch = 0.36;
     this.doel.copy(hond.positie);
-    this.doel.y += 1.4;
+    this.doel.y = hond.grondY + 1.4;
   }
 
-  update(dt, hond, invoer, beweging, { autoVolgen = true, extraDraai = 0 } = {}) {
+  update(dt, hond, invoer, beweging, { autoVolgen = true, extraDraai = 0, hoogte = () => 0 } = {}) {
     const d = invoer.neemCamDelta();
     const toets = invoer.camToetsen();
     if (d.x || d.y || toets) {
@@ -39,7 +39,7 @@ export class VolgCamera {
     }
 
     const doel = this.tmp.copy(hond.positie);
-    doel.y = hond.positie.y * 0.5 + 1.4;
+    doel.y = hond.grondY + (hond.positie.y - hond.grondY) * 0.5 + 1.4;
     this.doel.lerp(doel, 1 - Math.exp(-dt * 10));
 
     const a = this.afstand, cp = Math.cos(this.pitch);
@@ -48,7 +48,8 @@ export class VolgCamera {
       this.doel.y + Math.sin(this.pitch) * a,
       this.doel.z + Math.cos(this.yaw) * cp * a,
     );
-    if (this.camera.position.y < 0.6) this.camera.position.y = 0.6;
+    const grond = hoogte(this.camera.position.x, this.camera.position.z) + 0.8;
+    if (this.camera.position.y < grond) this.camera.position.y = grond;
     this.camera.lookAt(this.doel);
   }
 }
