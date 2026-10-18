@@ -18,6 +18,28 @@ import bever from './bever.js';
 import vos from './vos.js';
 import egel from './egel.js';
 import eekhoorn from './eekhoorn.js';
+// verklede halloween-diertjes
+import heksenkat from './heksenkat.js';
+import spookpoes from './spookpoes.js';
+import mummiekat from './mummiekat.js';
+import vampierhond from './vampierhond.js';
+import pompoencorgi from './pompoencorgi.js';
+import pompoenkat from './pompoenkat.js';
+import zwartekat from './zwartekat.js';
+import vleermuis from './vleermuis.js';
+// zeediertjes
+import walvis from './zee/walvis.js';
+import kwal from './zee/kwal.js';
+import clownvis from './zee/clownvis.js';
+import dolfijn from './zee/dolfijn.js';
+import narwal from './zee/narwal.js';
+import octopus from './zee/octopus.js';
+import krab from './zee/krab.js';
+import zeepaardje from './zee/zeepaardje.js';
+import schildpad from './zee/schildpad.js';
+import kogelvis from './zee/kogelvis.js';
 
 export const VRIENDJES = [kat, konijn, varken, koe, eend, kikker, beer, uil, eenhoorn, schaap, kip,
-  wasbeer, wolf, hert, bever, vos, egel, eekhoorn];
+  wasbeer, wolf, hert, bever, vos, egel, eekhoorn,
+  heksenkat, spookpoes, mummiekat, vampierhond, pompoencorgi, pompoenkat, zwartekat, vleermuis,
+  walvis, kwal, clownvis, dolfijn, narwal, octopus, krab, zeepaardje, schildpad, kogelvis];

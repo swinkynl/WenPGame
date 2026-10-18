@@ -61,7 +61,7 @@ function startSpel(keuze) {
     camera.far = wereld.zicht + 80;
     camera.updateProjectionMatrix();
 
-    const hond = new Hondje();
+    const hond = new Hondje({ zwemmen: !!gebied.zwemmen });
     wereld.scene.add(hond.groep);
 
     const ids = gebied.vriendjes ?? VRIENDJES.map((v) => v.id);
@@ -70,7 +70,7 @@ function startSpel(keuze) {
     gekozen = gekozen.slice(0, plekken.length);
     const vriendjes = gekozen.map((def, i) => {
       const v = new Vriendje(def);
-      v.plaats({ ...plekken[i], y: wereld.hoogte(plekken[i].x, plekken[i].z) });
+      v.plaats({ ...plekken[i], y: wereld.hoogte(plekken[i].x, plekken[i].z) + (def.zweef ?? 0) });
       wereld.scene.add(v.groep);
       return v;
     });
@@ -86,10 +86,12 @@ function startSpel(keuze) {
       hintTimer: 3,
       effecten: new Effecten(wereld.scene),
       tijd: 0,
+      zwemmen: !!gebied.zwemmen,
+      belTimer: 1,
     };
     volgCamera.reset(hond);
     invoer.reset();
-    UI.toonHud(vriendjes.length, keuze.hulpNeus, invoer.isTouch);
+    UI.toonHud(vriendjes.length, keuze.hulpNeus, invoer.isTouch, !!gebied.zwemmen);
     UI.melding(`Zoek ${vriendjes.length} vriendjes! 🔍`);
   }, 60);
 }
@@ -122,7 +124,7 @@ let vorige = performance.now();
 
 function lus(nu) {
   requestAnimationFrame(lus);
-  const dt = Math.min((nu - vorige) / 1000, 0.05);
+  const dt = Math.max(0, Math.min((nu - vorige) / 1000, 0.05));
   vorige = nu;
   if (!spel) return;
 
@@ -159,14 +161,15 @@ function lus(nu) {
 
   // vriendjes bewegen
   for (const v of spel.vriendjes) if (!v.gevonden) v.update(dt, t, null, hond.positie);
+  const zwemmen = spel.zwemmen;
   spel.volgers.forEach((v, i) => {
     if (spel.fase === 'feest') {
       if (v.toestand === 'volgen') v.feest();
       const a = (i / spel.volgers.length) * Math.PI * 2;
-      tmp.set(hond.positie.x + Math.sin(a) * 3, 0, hond.positie.z + Math.cos(a) * 3);
-      v.update(dt, t, tmp, hond.positie, hoogte);
+      tmp.set(hond.positie.x + Math.sin(a) * 3, hond.positie.y, hond.positie.z + Math.cos(a) * 3);
+      v.update(dt, t, tmp, hond.positie, hoogte, zwemmen);
     } else {
-      v.update(dt, t, i === 0 ? hond.positie : spel.volgers[i - 1].groep.position, hond.positie, hoogte);
+      v.update(dt, t, i === 0 ? hond.positie : spel.volgers[i - 1].groep.position, hond.positie, hoogte, zwemmen);
     }
   });
 
@@ -183,11 +186,20 @@ function lus(nu) {
     }
   }
 
+  // belletjes uit de snorkel
+  if (zwemmen && hond.snorkelTop) {
+    spel.belTimer -= dt;
+    if (spel.belTimer <= 0) {
+      spel.effecten.bel(hond.snorkelTop.getWorldPosition(tmp));
+      spel.belTimer = 0.7 + Math.random() * 0.8;
+    }
+  }
   spel.effecten.update(dt);
   volgCamera.update(dt, hond, invoer, beweging, {
     autoVolgen: zoeken,
     extraDraai: spel.fase === 'feest' ? dt * 0.35 : 0,
     hoogte,
+    binnen: wereld.binnen,
   });
   wereld.update(dt, t, hond.positie, camera);
   if (spel.hulpNeus) UI.neus(dichtsbij);

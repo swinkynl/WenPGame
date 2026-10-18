@@ -77,7 +77,7 @@ export function bouwMenu(gebieden, opStart) {
 
 let uitlegTimer = null;
 
-export function toonHud(aantal, hulpNeus, isTouch) {
+export function toonHud(aantal, hulpNeus, isTouch, zwemmen = false) {
   const rij = $('teller-vriendjes');
   rij.innerHTML = '';
   for (let i = 0; i < aantal; i++) {
@@ -91,9 +91,10 @@ export function toonHud(aantal, hulpNeus, isTouch) {
   vorigNiveau = -1;
 
   const uitleg = $('uitleg');
+  $('knop-spring').textContent = zwemmen ? 'Zwem!' : 'Hop!';
   uitleg.textContent = isTouch
-    ? 'Links op het scherm: sleep om te lopen · Rechts: sleep om rond te kijken'
-    : 'Pijltjes of WASD: lopen · Spatie: springen · Muis slepen: rondkijken';
+    ? `Links op het scherm: sleep om te ${zwemmen ? 'zwemmen' : 'lopen'} · Rechts: sleep om rond te kijken${zwemmen ? ' · Zwem!: omhoog' : ''}`
+    : `Pijltjes of WASD: ${zwemmen ? 'zwemmen' : 'lopen'} · Spatie: ${zwemmen ? 'omhoog zwemmen' : 'springen'} · Muis slepen: rondkijken`;
   uitleg.classList.remove('weg');
   clearTimeout(uitlegTimer);
   uitlegTimer = setTimeout(() => uitleg.classList.add('weg'), 7000);

@@ -16,6 +16,8 @@ export class Wereld {
     this.bezet = [];
     this.verstopplekken = [];
     this.updaters = [];
+    this.binnenRuimtes = [];
+    this.binnen = false;
     this.hoogteFn = gebied.hoogte ? gebied.hoogte.bind(gebied) : null;
 
     this.maakLuchtEnLicht();
@@ -43,6 +45,7 @@ export class Wereld {
   //   verstop: [[x, z], ...]                    -> plekjes waar een vriendje zich kan verstoppen
   //   ruimte: getal                             -> hoeveel plek het inneemt
   //   update: (dt, tijd, speler) => {}          -> voor bewegende dingen (molenwieken)
+  //   binnen: {b, d}, verberg: groep            -> gebouw om in te lopen; 'verberg' verdwijnt als je binnen bent
   plaats(obj, x, z, { draai = this.rng() * Math.PI * 2, schaal = 1, y = this.hoogte(x, z) - (this.hoogteFn ? 0.15 : 0) } = {}) {
     obj.position.set(x, y, z);
     obj.rotation.y = draai;
@@ -63,6 +66,8 @@ export class Wereld {
     for (const [lx, lz] of ud.verstop ?? []) this.verstopplekken.push(naarWereld(lx, lz));
     this.bezet.push({ x, z, r: (ud.ruimte ?? 1) * schaal });
     if (ud.update) this.updaters.push(ud.update);
+    // een gebouw waar je in kunt: als je binnen bent, wordt 'verberg' (dak) onzichtbaar
+    if (ud.binnen) this.binnenRuimtes.push({ x, z, hb: (ud.binnen.b / 2) * schaal, hd: (ud.binnen.d / 2) * schaal, rot: draai, verberg: ud.verberg });
     return obj;
   }
 
@@ -173,6 +178,14 @@ export class Wereld {
     }
   }
 
+  // ligt dit punt binnen in een gebouw (zoals het spookhuis)?
+  isBinnen(x, z) {
+    return this.binnenRuimtes.some((r) => {
+      const dx = x - r.x, dz = z - r.z, cos = Math.cos(r.rot), sin = Math.sin(r.rot);
+      return Math.abs(dx * cos - dz * sin) < r.hb + 0.5 && Math.abs(dx * sin + dz * cos) < r.hd + 0.5;
+    });
+  }
+
   isVrij(x, z, r) {
     const p = { x, z };
     this.duwWeg(p, r);
@@ -201,6 +214,14 @@ export class Wereld {
 
   update(dt, tijd, volgPositie, camera) {
     for (const u of this.updaters) u(dt, tijd, volgPositie);
+    this.binnen = false;
+    for (const r of this.binnenRuimtes) {
+      const dx = volgPositie.x - r.x, dz = volgPositie.z - r.z;
+      const cos = Math.cos(r.rot), sin = Math.sin(r.rot);
+      const erin = Math.abs(dx * cos - dz * sin) < r.hb && Math.abs(dx * sin + dz * cos) < r.hd;
+      if (r.verberg) r.verberg.visible = !erin;
+      if (erin) this.binnen = true;
+    }
     this.zon.position.copy(volgPositie).add(this.zonRichting);
     this.zon.target.position.copy(volgPositie);
     this.koepel.position.copy(camera.position);

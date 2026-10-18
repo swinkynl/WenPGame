@@ -471,7 +471,7 @@ export function bloemen(w, aantal, kleuren) {
     const k = w.kies(kleuren);
     for (let j = 0; j < 12 && i < aantal; j++) {
       const x = cx + w.tussen(-2.5, 2.5), z = cz + w.tussen(-2.5, 2.5);
-      if (!w.isVrij(x, z, 0.3)) continue;
+      if (!w.isVrij(x, z, 0.3) || w.isBinnen(x, z)) continue;
       const s = w.tussen(0.7, 1.4);
       m.makeScale(s, s, s).setPosition(x, w.hoogte(x, z) - 0.02, z);
       stelen.setMatrixAt(i, m);
@@ -492,7 +492,7 @@ export function gras(w, aantal, kleur = 0x5cb85c) {
   for (let i = 0; i < aantal; i++) {
     const s = w.tussen(0.6, 1.4);
     const x = (w.rng() * 2 - 1) * (w.half - 2), z = (w.rng() * 2 - 1) * (w.half - 2);
-    m.makeScale(s, s * w.tussen(0.8, 1.6), s).setPosition(x, w.hoogte(x, z) - 0.05, z);
+    m.makeScale(s, s * w.tussen(0.8, 1.6), s).setPosition(x, w.hoogte(x, z) - (w.isBinnen(x, z) ? 5 : 0.05), z);
     im.setMatrixAt(i, m);
     im.setColorAt(i, k.copy(c).offsetHSL(0, 0, w.tussen(-0.08, 0.06)));
   }
@@ -891,3 +891,6 @@ export function blokhut() {
   const verstop = [[b / 2 + 1.2, d / 2 + 1.2], [-b / 2 - 1.2, d / 2 + 1.2], [b / 2 + 1.2, -d / 2 - 1.2], [-b / 2 - 1.2, -d / 2 - 1.2], [0, -d / 2 - 1.2]];
   return info(g, [{ b: b + 0.5, d: d + 0.5 }], verstop, 5);
 }
+
+// Hulpjes voor de decor-bestanden in src/decor/
+export { rondom, info, zadeldak, instanties };

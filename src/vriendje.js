@@ -17,6 +17,7 @@ export class Vriendje {
     this.timer = 0;
     this.hopTimer = 0;
     this.loopFase = 0;
+    this.zweef = def.zweef ?? 0; // zwevende vriendjes (vleermuis, vissen) hangen boven de grond
 
     // Een vriendje kan ook een .glb-model gebruiken (zie README)
     if (def.model) {
@@ -53,8 +54,10 @@ export class Vriendje {
   }
 
   // doel: positie om naartoe te lopen, hond: positie van het hondje
-  update(dt, t, doel, hond, hoogte = () => 0) {
+  update(dt, t, doel, hond, hoogte = () => 0, zwemmen = false) {
     const m = this.model, ud = m.userData;
+    if (ud.vleugels) ud.vleugels.forEach((v, i) => (v.rotation.z = (i ? -1 : 1) * Math.sin(t * 9 + this.fase) * 0.45));
+    const zweefDeining = this.zweef ? Math.sin(t * 1.6 + this.fase) * 0.15 : 0;
     if (ud.kop) ud.kop.rotation.y = Math.sin(t * 0.9 + this.fase) * 0.45;
     if (ud.staart) ud.staart.rotation.z = Math.sin(t * (this.toestand === 'verstopt' ? 3 : 10) + this.fase) * 0.35;
 
@@ -64,7 +67,7 @@ export class Vriendje {
         this.hopTimer -= dt;
         m.position.y = Math.sin((1 - Math.max(0, this.hopTimer) / 0.5) * Math.PI) * 0.45;
       } else {
-        m.position.y = 0;
+        m.position.y = zweefDeining;
       }
       return;
     }
@@ -93,7 +96,14 @@ export class Vriendje {
       pos.z += (dz / d) * v * dt;
       this.groep.rotation.y = draaiNaar(this.groep.rotation.y, Math.atan2(dx, dz), dt * 10);
     }
-    pos.y = hoogte(pos.x, pos.z);
+    const bodem = hoogte(pos.x, pos.z);
+    if (zwemmen) {
+      // onder water zwemmen de vriendjes op de hoogte van wie ze volgen
+      pos.y += (doel.y - pos.y) * (1 - Math.exp(-dt * 3));
+      pos.y = Math.max(pos.y, bodem + this.zweef * 0.5);
+    } else {
+      pos.y = bodem + this.zweef;
+    }
     if (v > 0.4) {
       this.loopFase += dt * 13;
       m.position.y = Math.abs(Math.sin(this.loopFase)) * 0.3;
@@ -101,7 +111,7 @@ export class Vriendje {
       m.position.y = Math.abs(Math.sin(t * 5 + this.fase)) * 0.9;
       this.groep.rotation.y = draaiNaar(this.groep.rotation.y, Math.atan2(hond.x - pos.x, hond.z - pos.z), dt * 8);
     } else {
-      m.position.y = Math.max(0, m.position.y - dt * 3);
+      m.position.y = Math.max(zweefDeining, m.position.y - dt * 3);
     }
   }
 }

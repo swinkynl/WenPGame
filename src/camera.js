@@ -10,6 +10,7 @@ export class VolgCamera {
     this.afstand = 8;
     this.doel = new THREE.Vector3();
     this.handmatigTot = 0;
+    this.binnenMix = 0;
     this.tmp = new THREE.Vector3();
   }
 
@@ -20,7 +21,7 @@ export class VolgCamera {
     this.doel.y = hond.grondY + 1.4;
   }
 
-  update(dt, hond, invoer, beweging, { autoVolgen = true, extraDraai = 0, hoogte = () => 0 } = {}) {
+  update(dt, hond, invoer, beweging, { autoVolgen = true, extraDraai = 0, hoogte = () => 0, binnen = false } = {}) {
     const d = invoer.neemCamDelta();
     const toets = invoer.camToetsen();
     if (d.x || d.y || toets) {
@@ -42,10 +43,14 @@ export class VolgCamera {
     doel.y = hond.grondY + (hond.positie.y - hond.grondY) * 0.5 + 1.4;
     this.doel.lerp(doel, 1 - Math.exp(-dt * 10));
 
-    const a = this.afstand, cp = Math.cos(this.pitch);
+    // binnen in een huis: camera wat dichterbij en meer van bovenaf
+    this.binnenMix += ((binnen ? 1 : 0) - this.binnenMix) * (1 - Math.exp(-dt * 4));
+    const pitch = this.pitch + (Math.max(this.pitch, 0.85) - this.pitch) * this.binnenMix;
+    const a = this.afstand + (Math.min(this.afstand, 6.5) - this.afstand) * this.binnenMix;
+    const cp = Math.cos(pitch);
     this.camera.position.set(
       this.doel.x + Math.sin(this.yaw) * cp * a,
-      this.doel.y + Math.sin(this.pitch) * a,
+      this.doel.y + Math.sin(pitch) * a,
       this.doel.z + Math.cos(this.yaw) * cp * a,
     );
     const grond = hoogte(this.camera.position.x, this.camera.position.z) + 0.8;

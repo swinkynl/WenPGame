@@ -1,11 +1,42 @@
 // Het gele hondje: de speler.
 import * as THREE from 'three';
-import { bol, cilinder, kegel, groep, ogen } from './hulp/vormen.js';
+import { bol, cilinder, kegel, torus, groep, ogen } from './hulp/vormen.js';
 import { draaiNaar } from './hulp/wiskunde.js';
 
 const MAX_SNELHEID = 9;
 const STRAAL = 0.6;
 const ZWAARTEKRACHT = 22;
+const ZWEM_SNELHEID = 7;
+const ZWEM_HOOGTE = 14;   // hoe hoog het hondje boven de bodem kan zwemmen
+
+// Duikbril en snorkel (onder water)
+function zetSnorkelOp(kop) {
+  const oranje = 0xffa62b, glas = 0xbff1ff;
+  for (const s of [-1, 1]) {
+    const bril = groep(s * 0.23, 0.06, 0.47);
+    bril.rotation.y = s * 0.28;
+    bril.add(torus(oranje, 0.17, 0.035));
+    bril.add(bol(glas, 0.16, [0, 0, 0.02], [1, 1, 0.3], { doorzichtig: 0.35, rand: false }));
+    kop.add(bril);
+  }
+  const brug = cilinder(oranje, 0.035, 0.035, 0.12, [0, 0.06, 0.55], 6);
+  brug.rotation.z = Math.PI / 2;
+  kop.add(brug);
+  const band = torus(0x2b2b3a, 0.58, 0.03, [0, 0.06, -0.02]);
+  band.rotation.x = Math.PI / 2;
+  band.scale.set(0.6, 0.55, 0.58);
+  kop.add(band);
+  const snorkel = groep(0.48, 0.1, 0.2);
+  snorkel.add(cilinder(0xffd23f, 0.05, 0.05, 0.85, [0, 0.35, 0], 8));
+  snorkel.add(cilinder(0xff5a5a, 0.065, 0.065, 0.12, [0, 0.8, 0], 8));
+  const mond = cilinder(0xffd23f, 0.04, 0.04, 0.4, [-0.2, -0.32, 0.25], 6);
+  mond.rotation.set(0.6, 0, 1.0);
+  snorkel.add(mond);
+  const top = groep(0, 0.9, 0);
+  snorkel.add(top);
+  kop.add(snorkel);
+  return top;
+}
 
 // Chibi-stijl: groot koppie, grote glimogen, flaporen, pluizige borst en staart
 function maakModel() {
@@ -71,9 +102,11 @@ function maakModel() {
 }
 
 export class Hondje {
-  constructor() {
+  constructor({ zwemmen = false } = {}) {
     const m = maakModel();
     Object.assign(this, m);
+    this.zwemmen = zwemmen;
+    if (zwemmen) this.snorkelTop = zetSnorkelOp(m.kop);
     this.groep = m.hond;
     this.positie = this.groep.position;
     this.hoek = 0;
@@ -87,6 +120,11 @@ export class Hondje {
   }
 
   spring() {
+    if (this.zwemmen) {
+      // zwemslag omhoog
+      this.vy = Math.min(this.vy + 3.4, 5);
+      return true;
+    }
     if (!this.opGrond) return false;
     this.vy = 7.5;
     this.opGrond = false;
@@ -113,9 +151,11 @@ export class Hondje {
       mz /= l;
     }
 
-    const f = 1 - Math.exp(-10 * dt);
-    this.snelheid.x += (mx * MAX_SNELHEID * sterkte - this.snelheid.x) * f;
-    this.snelheid.y += (mz * MAX_SNELHEID * sterkte - this.snelheid.y) * f;
+    // onder water gaat alles wat trager en zachter
+    const max = this.zwemmen ? ZWEM_SNELHEID : MAX_SNELHEID;
+    const f = 1 - Math.exp(-(this.zwemmen ? 3 : 10) * dt);
+    this.snelheid.x += (mx * max * sterkte - this.snelheid.x) * f;
+    this.snelheid.y += (mz * max * sterkte - this.snelheid.y) * f;
 
     this.positie.x += this.snelheid.x * dt;
     this.positie.z += this.snelheid.y * dt;
@@ -131,7 +171,22 @@ export class Hondje {
     // over heuvels lopen en springen
     const grond = wereld.hoogte(this.positie.x, this.positie.z);
     this.grondY = grond;
-    if (this.opGrond) {
+    if (this.zwemmen) {
+      // drijven: langzaam zakken, met weerstand van het water
+      this.vy -= 2.2 * dt;
+      this.vy *= Math.exp(-1.2 * dt);
+      this.positie.y += this.vy * dt;
+      const laag = grond + 0.5, hoog = grond + ZWEM_HOOGTE;
+      if (this.positie.y < laag) {
+        this.positie.y = laag;
+        this.vy = Math.max(0, this.vy);
+      }
+      if (this.positie.y > hoog) {
+        this.positie.y = hoog;
+        this.vy = Math.min(0, this.vy);
+      }
+      this.grondY = this.positie.y; // camera zwemt mee omhoog en omlaag
+    } else if (this.opGrond) {
       this.positie.y = grond;
     } else {
       this.vy -= ZWAARTEKRACHT * dt;
@@ -147,6 +202,7 @@ export class Hondje {
   }
 
   animeer(dt, v) {
+    if (this.zwemmen) return this.animeerZwemmen(dt, v);
     const loop = Math.min(v / MAX_SNELHEID, 1);
     this.fase += dt * (4 + v * 1.6);
     const zwaai = Math.sin(this.fase) * 0.75 * loop;
@@ -168,6 +224,26 @@ export class Hondje {
     this.kop.rotation.z = blij ? Math.sin(this.tijd * 10) * 0.15 : 0;
     for (const [i, oor] of this.oren.entries()) {
       oor.rotation.x = -loop * 0.5 + Math.sin(this.fase * 2 + i) * 0.15 * loop;
+    }
+  }
+
+  // Hondjes-peddel: pootjes draaien rondjes, oortjes zweven omhoog
+  animeerZwemmen(dt, v) {
+    const zwem = Math.min(v / ZWEM_SNELHEID, 1);
+    this.fase += dt * (5 + v * 1.5);
+    const p = Math.sin(this.fase);
+    this.poten[0].rotation.x = -0.7 + p * 0.8;
+    this.poten[1].rotation.x = -0.7 - p * 0.8;
+    this.poten[2].rotation.x = 0.6 - p * 0.5;
+    this.poten[3].rotation.x = 0.6 + p * 0.5;
+    this.lijf.rotation.x = 0.15 * zwem;
+    this.lijf.position.y = Math.sin(this.tijd * 2) * 0.08;
+    this.blijTimer = Math.max(0, this.blijTimer - dt);
+    const blij = this.blijTimer > 0;
+    this.staart.rotation.z = Math.sin(this.tijd * (blij ? 20 : 4)) * 0.5;
+    this.kop.rotation.z = blij ? Math.sin(this.tijd * 10) * 0.15 : 0;
+    for (const [i, oor] of this.oren.entries()) {
+      oor.rotation.x = -0.9 + Math.sin(this.tijd * 2 + i) * 0.2;
     }
   }
 }
