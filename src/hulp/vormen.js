@@ -38,13 +38,16 @@ export function lijn(hex, dikte = 0.0035) {
 export const GEEN_LIJN = { visible: false };
 
 // gloed: laat iets licht geven (0..1), doorzichtig: 0..1, vlak: voor platte dingen op de grond,
-// rand: false = geen omlijning (voor ogen, blosjes, gras, ...)
-export function materiaal(hex, { gloed = 0, doorzichtig = 1, vlak = false, rand = true } = {}) {
-  const sleutel = `${hex}|${gloed}|${doorzichtig}|${vlak}|${rand}`;
+// rand: false = geen omlijning (voor ogen, blosjes, gras, ...), lijnKleur: vaste kleur voor de omlijning
+export function materiaal(hex, { gloed = 0, doorzichtig = 1, vlak = false, rand = true, lijnKleur = null } = {}) {
+  const sleutel = `${hex}|${gloed}|${doorzichtig}|${vlak}|${rand}|${lijnKleur}`;
   let m = materialen.get(sleutel);
   if (!m) {
     m = new THREE.MeshToonMaterial({ color: hex, gradientMap: toonVerloopKaart() });
-    m.userData.outlineParameters = rand && doorzichtig === 1 && !vlak ? lijn(hex) : GEEN_LIJN;
+    const metRand = rand && doorzichtig === 1 && !vlak;
+    m.userData.outlineParameters = !metRand ? GEEN_LIJN
+      : lijnKleur != null ? { thickness: 0.0045, color: new THREE.Color(lijnKleur).toArray(), alpha: 1, keepAlive: true }
+        : lijn(hex);
     if (gloed) {
       m.emissive.set(hex);
       m.emissiveIntensity = gloed;
@@ -154,12 +157,21 @@ export function groep(x = 0, y = 0, z = 0) {
 // Twee grote anime-ogen (iris, pupil, glimlichtjes, ooglid) met blosjes eronder.
 // x: afstand van het midden, y/z: positie op het gezicht, r: grootte
 // dicht: true geeft blije dichte oogjes (^^)
-export function ogen(ouder, x, y, z, r = 0.08, irisKleur = 0x5a2d1a, { blos = true, dicht = false } = {}) {
+// stijl: 'kraal' geeft ronde donkere kraaloogjes met sterretjes-glimmers
+export function ogen(ouder, x, y, z, r = 0.08, irisKleur = 0x5a2d1a, { blos = true, dicht = false, stijl = 'anime' } = {}) {
   const geen = { rand: false };
   const glim = { rand: false, gloed: 0.6 };
   for (const s of [-1, 1]) {
     const oog = groep(s * x, y, z);
     oog.rotation.y = s * 0.28;
+    if (stijl === 'kraal' && !dicht) {
+      oog.add(bol(0x3a1d12, r, [0, 0, 0], [0.92, 1, 0.45], geen));
+      for (const vorm of [[0.3, 1, 0.2], [1, 0.3, 0.2]]) oog.add(octa(0xffffff, r * 0.34, [r * 0.3, r * 0.3, r * 0.5], vorm, glim));
+      oog.add(bol(0xffffff, r * 0.12, [-r * 0.28, -r * 0.32, r * 0.46], [1, 1, 0.5], glim));
+      if (blos) oog.add(bol(0xff8fab, r * 0.6, [s * r * 0.4, -r * 1.35, r * 0.05], [1.3, 0.65, 0.3], { rand: false, doorzichtig: 0.75 }));
+      ouder.add(oog);
+      continue;
+    }
     if (dicht) {
       const boogje = torus(0x2b160c, r * 0.6, r * 0.14, [0, -r * 0.3, r * 0.3], Math.PI, geen);
       boogje.scale.set(r * 0.6, r * 0.75, r * 0.6);
@@ -180,6 +192,17 @@ export function ogen(ouder, x, y, z, r = 0.08, irisKleur = 0x5a2d1a, { blos = tr
     oog.add(lid);
     if (blos) oog.add(bol(0xff8fab, r * 0.55, [s * r * 0.35, -r * 1.45, r * 0.1], [1.3, 0.65, 0.3], { rand: false, doorzichtig: 0.7 }));
     ouder.add(oog);
+  }
+}
+
+// Glimlachje: een boogje (∪), of met w: true een kattenmondje (ω)
+export function glimlach(ouder, y, z, breedte = 0.12, kleur = 0x3a1d12, { w = false, dikte = 0.014 } = {}) {
+  const bogen = w ? [-breedte / 2, breedte / 2] : [0];
+  const r = w ? breedte / 2 : breedte;
+  for (const x of bogen) {
+    const boog = torus(kleur, r, dikte, [x, y, z], Math.PI, { rand: false });
+    boog.rotation.z = Math.PI;
+    ouder.add(boog);
   }
 }
 

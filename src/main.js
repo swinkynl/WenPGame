@@ -65,7 +65,10 @@ function startSpel(keuze) {
     wereld.scene.add(hond.groep);
 
     const ids = gebied.vriendjes ?? VRIENDJES.map((v) => v.id);
-    let gekozen = schud(ids.map((id) => VRIENDJES.find((v) => v.id === id)).filter(Boolean)).slice(0, keuze.aantal);
+    // vriendjes die er altijd bij zijn (zoals Bob Bitterbal in de snackbar) komen eerst
+    const altijd = gebied.altijd ?? [];
+    const volgorde = [...altijd, ...schud(ids.filter((id) => !altijd.includes(id)))];
+    let gekozen = volgorde.map((id) => VRIENDJES.find((v) => v.id === id)).filter(Boolean).slice(0, keuze.aantal);
     const plekken = wereld.kiesVerstopplekken(gekozen.length);
     gekozen = gekozen.slice(0, plekken.length);
     const vriendjes = gekozen.map((def, i) => {

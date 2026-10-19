@@ -38,8 +38,19 @@ import krab from './zee/krab.js';
 import zeepaardje from './zee/zeepaardje.js';
 import schildpad from './zee/schildpad.js';
 import kogelvis from './zee/kogelvis.js';
+// snacks
+import bitterbal from './snacks/bitterbal.js';
+import kroket from './snacks/kroket.js';
+import frikandel from './snacks/frikandel.js';
+import patat from './snacks/patat.js';
+import kaassouffle from './snacks/kaassouffle.js';
+import softijs from './snacks/softijs.js';
+import milkshake from './snacks/milkshake.js';
+import hamburger from './snacks/hamburger.js';
+import ketchup from './snacks/ketchup.js';
 
 export const VRIENDJES = [kat, konijn, varken, koe, eend, kikker, beer, uil, eenhoorn, schaap, kip,
   wasbeer, wolf, hert, bever, vos, egel, eekhoorn,
   heksenkat, spookpoes, mummiekat, vampierhond, pompoencorgi, pompoenkat, zwartekat, vleermuis,
-  walvis, kwal, clownvis, dolfijn, narwal, octopus, krab, zeepaardje, schildpad, kogelvis];
+  walvis, kwal, clownvis, dolfijn, narwal, octopus, krab, zeepaardje, schildpad, kogelvis,
+  bitterbal, kroket, frikandel, patat, kaassouffle, softijs, milkshake, hamburger, ketchup];
