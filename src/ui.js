@@ -61,6 +61,7 @@ export function bouwMenu(gebieden, opStart) {
   }
 
   $('hulp-neus').checked = inst.hulpNeus ?? true;
+  $('papier-hondje').checked = inst.papierHondje ?? true;
 
   function markeer() {
     for (const k of kaarten.children) k.classList.toggle('gekozen', k.dataset.id === gebied);
@@ -69,7 +70,7 @@ export function bouwMenu(gebieden, opStart) {
   markeer();
 
   $('knop-start').onclick = () => {
-    const keuze = { gebied, aantal, hulpNeus: $('hulp-neus').checked };
+    const keuze = { gebied, aantal, hulpNeus: $('hulp-neus').checked, papierHondje: $('papier-hondje').checked };
     bewaar(keuze);
     opStart(keuze);
   };

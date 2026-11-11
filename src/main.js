@@ -61,7 +61,7 @@ function startSpel(keuze) {
     camera.far = wereld.zicht + 80;
     camera.updateProjectionMatrix();
 
-    const hond = new Hondje({ zwemmen: !!gebied.zwemmen });
+    const hond = new Hondje({ zwemmen: !!gebied.zwemmen, papier: keuze.papierHondje ?? true });
     wereld.scene.add(hond.groep);
 
     const ids = gebied.vriendjes ?? VRIENDJES.map((v) => v.id);
@@ -204,6 +204,7 @@ function lus(nu) {
     hoogte,
     binnen: wereld.binnen,
   });
+  hond.kijkVanaf(camera.position);
   wereld.update(dt, t, hond.positie, camera);
   if (spel.hulpNeus) UI.neus(dichtsbij);
 
