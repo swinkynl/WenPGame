@@ -51,6 +51,17 @@ Three.js wordt van internet geladen, dus het spel heeft internet nodig.
 Voor een kawaii-diertje (mollig lijfje, groot koppie) begin je het makkelijkst met `chibi()` uit
 `src/vriendjes/chibi.js`, zoals de bosdiertjes (bijvoorbeeld `vos.js`). Met `dicht: true` krijgt het blije dichte oogjes (^^).
 
+**Getekend vriendje (van plaatjes):** zet de tekeningen in bijvoorbeeld `afbeeldingen/snacks/bitterbal/`
+(`voor.png`, en eventueel `zij.png` die naar links kijkt en `achter.png`) en gebruik:
+
+```js
+export default { id: 'bitterbal', naam: 'Bob Bitterbal', emoji: '🇳🇱', hoogte: 1.3,
+  plaatjes: { voor: 'afbeeldingen/snacks/bitterbal/voor.png' } };
+```
+
+Een turnaround sheet (voor, zij en achter naast elkaar) knip je zo in losse plaatjes:
+`python tools/knip_plaatje.py sheet.png afbeeldingen/snacks/bitterbal`
+
 Heb je een 3D-model als `.glb`-bestand (bijvoorbeeld uit Blender)? Zet het in een map `modellen/` en gebruik:
 
 ```js

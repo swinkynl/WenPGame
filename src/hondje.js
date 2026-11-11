@@ -1,7 +1,8 @@
 // Het gele hondje: de speler.
 import * as THREE from 'three';
 import { bol, cilinder, kegel, torus, groep, ogen, glimlach } from './hulp/vormen.js';
-import { draaiNaar, hoekVerschil } from './hulp/wiskunde.js';
+import { draaiNaar } from './hulp/wiskunde.js';
+import { PapierFiguur } from './papier.js';
 
 const MAX_SNELHEID = 9;
 const STRAAL = 0.6;
@@ -120,38 +121,19 @@ function maakModel() {
   return { hond, lijf, kop, oren, poten, staart };
 }
 
-// Getekend ("papieren") hondje: de tekening van voren, opzij en van achteren.
-// Het kaartje draait altijd naar de camera en toont de kant die je zou moeten zien.
+// Getekend ("papieren") hondje: de tekening van voren, opzij en van achteren
 const PAPIER_HOOGTE = 2.0;
 
 function maakPapierModel() {
-  const hond = new THREE.Group();
-  const laad = (naam) => {
-    const t = new THREE.TextureLoader().load(`afbeeldingen/hondje/${naam}.png`);
-    t.colorSpace = THREE.SRGBColorSpace;
-    t.anisotropy = 4;
-    return t;
-  };
-  const beelden = { voor: laad('voor'), zij: laad('zij'), achter: laad('achter') };
-  const mat = new THREE.MeshBasicMaterial({ map: beelden.achter, alphaTest: 0.4, side: THREE.DoubleSide });
-  mat.userData.outlineParameters = { visible: false }; // de tekening heeft zelf al lijnen
-  const geo = new THREE.PlaneGeometry(1, 1);
-  geo.translate(0, 0.5, 0);
-  const kaart = new THREE.Mesh(geo, mat);
-  const draaier = new THREE.Group();
-  draaier.add(kaart);
-  hond.add(draaier);
-  // zacht schaduwvlekje onder het hondje
-  const schaduwMat = new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.18, depthWrite: false });
-  schaduwMat.userData.outlineParameters = { visible: false };
-  const schaduw = new THREE.Mesh(new THREE.CircleGeometry(0.75, 24), schaduwMat);
-  schaduw.rotation.x = -Math.PI / 2;
-  schaduw.scale.set(1, 0.7, 1);
-  hond.add(schaduw);
+  const figuur = new PapierFiguur({
+    voor: 'afbeeldingen/hondje/voor.png',
+    zij: 'afbeeldingen/hondje/zij.png',
+    achter: 'afbeeldingen/hondje/achter.png',
+  }, PAPIER_HOOGTE);
   const kop = new THREE.Group(); // plek van het koppie (voor belletjes onder water)
   kop.position.set(0, 1.6, 0);
-  draaier.add(kop);
-  return { hond, kaart, draaier, schaduw, beelden, kop };
+  figuur.draaier.add(kop);
+  return { hond: figuur.groep, figuur, kop };
 }
 
 export class Hondje {
@@ -161,7 +143,6 @@ export class Hondje {
     Object.assign(this, m);
     this.zwemmen = zwemmen;
     this.papier = papier;
-    this.spiegel = 1;
     this.bodemY = 0;
     if (zwemmen) this.snorkelTop = papier ? m.kop : zetSnorkelOp(m.kop);
     this.groep = m.hond;
@@ -261,16 +242,7 @@ export class Hondje {
 
   // Kies welke tekening je ziet (voor, opzij of achter), afhankelijk van waar de camera staat
   kijkVanaf(camera) {
-    if (!this.papier) return;
-    const c = Math.atan2(camera.x - this.positie.x, camera.z - this.positie.z);
-    this.draaier.rotation.y = c - this.hoek; // kaartje recht naar de camera
-    const verschil = hoekVerschil(this.hoek, c), a = Math.abs(verschil);
-    let beeld = 'zij';
-    if (a < Math.PI * 0.3) beeld = 'voor';
-    else if (a > Math.PI * 0.7) beeld = 'achter';
-    // de zijkant-tekening kijkt naar links; spiegelen als het hondje naar rechts loopt
-    this.spiegel = beeld === 'zij' && verschil < 0 ? -1 : 1;
-    this.kaart.material.map = this.beelden[beeld];
+    if (this.papier) this.figuur.kijkVanaf(this.positie, this.hoek, camera);
   }
 
   animeer(dt, v) {
@@ -338,13 +310,10 @@ export class Hondje {
       kantel += Math.sin(this.tijd * 18) * 0.12;
       hup += Math.abs(Math.sin(this.tijd * 9)) * 0.15;
     }
-    const plaatje = this.kaart.material.map.image;
-    const verhouding = plaatje && plaatje.width ? plaatje.width / plaatje.height : 0.85;
-    this.kaart.position.y = hup;
-    this.kaart.rotation.z = kantel;
-    this.kaart.scale.set(PAPIER_HOOGTE * verhouding * this.spiegel / rek, PAPIER_HOOGTE * rek, 1);
-    this.schaduw.position.y = this.bodemY - this.positie.y + 0.04;
+    this.figuur.zet(hup, kantel, rek);
+    const schaduw = this.figuur.schaduw;
+    schaduw.position.y = this.bodemY - this.positie.y + 0.04;
     const klein = 1 - Math.min(0.5, (this.positie.y - this.bodemY) * 0.15);
-    this.schaduw.scale.set(klein, 0.7 * klein, 1);
+    schaduw.scale.set(klein, 0.7 * klein, 1);
   }
 }

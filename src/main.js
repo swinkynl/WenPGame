@@ -205,6 +205,7 @@ function lus(nu) {
     binnen: wereld.binnen,
   });
   hond.kijkVanaf(camera.position);
+  for (const v of spel.vriendjes) v.kijkVanaf(camera.position);
   wereld.update(dt, t, hond.positie, camera);
   if (spel.hulpNeus) UI.neus(dichtsbij);
 

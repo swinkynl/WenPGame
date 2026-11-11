@@ -2,12 +2,19 @@
 import * as THREE from 'three';
 import { draaiNaar } from './hulp/wiskunde.js';
 import { laadGLB } from './hulp/modellen.js';
+import { PapierFiguur } from './papier.js';
 
 export class Vriendje {
   constructor(def) {
     this.def = def;
     this.groep = new THREE.Group();
-    this.model = def.maak ? def.maak() : new THREE.Group();
+    if (def.plaatjes) {
+      // getekend vriendje (plaatjes in plaats van 3D-vormen)
+      this.figuur = new PapierFiguur(def.plaatjes, def.hoogte ?? 1.3);
+      this.model = this.figuur.groep;
+    } else {
+      this.model = def.maak ? def.maak() : new THREE.Group();
+    }
     this.groep.add(this.model);
     // chibi-stijl: grotere koppies
     const kop = this.model.userData.kop;
@@ -47,6 +54,11 @@ export class Vriendje {
 
   hop() {
     if (this.toestand === 'verstopt') this.hopTimer = 0.5;
+  }
+
+  // getekende vriendjes draaien hun tekening naar de camera
+  kijkVanaf(camera) {
+    if (this.figuur) this.figuur.kijkVanaf(this.groep.position, this.groep.rotation.y + this.model.rotation.y, camera);
   }
 
   feest() {
