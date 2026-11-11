@@ -61,7 +61,7 @@ function startSpel(keuze) {
     camera.far = wereld.zicht + 80;
     camera.updateProjectionMatrix();
 
-    const hond = new Hondje({ zwemmen: !!gebied.zwemmen, papier: keuze.papierHondje ?? true });
+    const hond = new Hondje({ zwemmen: !!gebied.zwemmen, papier: !!keuze.getekendHondje });
     wereld.scene.add(hond.groep);
 
     const ids = gebied.vriendjes ?? VRIENDJES.map((v) => v.id);

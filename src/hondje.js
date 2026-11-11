@@ -39,10 +39,10 @@ function zetSnorkelOp(kop) {
   return top;
 }
 
-// Kawaii-stijl zoals het voorbeeldplaatje: citroengeel met bruine omlijning, kraaloogjes met
-// sterretjes, ω-mondje, blosjes, flaporen en een roze halsbandje met een hartjesslot.
+// Kawaii-stijl zoals de tekening (afbeeldingen/hondje): goudgeel met bruine omlijning, ronde oogjes,
+// open lachmondje met tongetje, blosjes, flaporen, crèmekleurige borst en een rood halsbandje met penning.
 function maakModel() {
-  const geel = 0xffd23f, licht = 0xffe37a, oorkleur = 0xf2ad2e, bruin = 0x3a1d12;
+  const geel = 0xffc94a, licht = 0xfff0c8, oorkleur = 0xf3a93a, bruin = 0x3a1d12;
   const L = { lijnKleur: 0x5a2d16 }; // bruine tekenlijn
   const hond = new THREE.Group();
 
@@ -59,20 +59,15 @@ function maakModel() {
     lijf.add(pluk);
   }
 
-  // roze halsbandje met rode knopjes en een hartjesslot
-  const band = torus(0xf4a3b4, 0.36, 0.08, [0, 1.08, 0.1], Math.PI * 2, L);
+  // rood halsbandje met een gouden penning
+  const band = torus(0xd8342c, 0.36, 0.07, [0, 1.08, 0.1], Math.PI * 2, L);
   band.rotation.x = Math.PI / 2 - 0.2;
   lijf.add(band);
-  for (const s of [-1, 1]) lijf.add(bol(0xc0263a, 0.06, [s * 0.36, 1.08, 0.1], [1, 1, 1], L));
-  const slotje = groep(0, 0.92, 0.48);
-  slotje.add(torus(0xffc93c, 0.035, 0.012, [0, 0.07, 0], Math.PI * 2, { rand: false }));
-  for (const s of [-1, 1]) slotje.add(bol(0xd62839, 0.055, [s * 0.04, 0, 0], [1, 1, 0.7], L));
-  const punt = kegel(0xd62839, 0.075, 0.1, [0, -0.06, 0], 12, L);
-  punt.rotation.x = Math.PI;
-  punt.scale.z = 0.05;
-  slotje.add(punt);
-  slotje.add(bol(0x5a1020, 0.016, [0, -0.015, 0.04], [1, 1.4, 0.5], { rand: false }));
-  lijf.add(slotje);
+  const penning = groep(0, 0.92, 0.47);
+  penning.add(torus(0xffc93c, 0.03, 0.012, [0, 0.07, 0], Math.PI * 2, { rand: false }));
+  penning.add(bol(0xffc93c, 0.075, [0, 0, 0], [1, 1, 0.35], { ...L, gloed: 0.15 }));
+  penning.add(bol(0xfff3c4, 0.025, [-0.02, 0.02, 0.025], [1, 1, 0.5], { rand: false }));
+  lijf.add(penning);
 
   // kop
   const kop = groep(0, 1.56, 0.22);
@@ -81,15 +76,23 @@ function maakModel() {
   kop.add(bol(licht, 0.17, [0, -0.17, 0.42], [1.4, 0.8, 0.6], { rand: false }));
   kop.add(bol(0x6b3a2a, 0.065, [0, -0.07, 0.56], [1.35, 0.95, 0.8], L));
   kop.add(bol(0xffffff, 0.02, [0.025, -0.045, 0.61], [1, 1, 1], { rand: false, gloed: 0.5 }));
-  glimlach(kop, -0.19, 0.535, 0.075, bruin, { w: true });
-  for (const s of [-1, 1]) kop.add(bol(oorkleur, 0.05, [s * 0.22, 0.25, 0.43], [1.4, 0.6, 0.4], { rand: false }));
+  glimlach(kop, -0.17, 0.54, 0.075, bruin, { w: true });
+  // open mondje met tongetje
+  kop.add(bol(0x7a2232, 0.09, [0, -0.25, 0.5], [1.1, 0.75, 0.45], { rand: false }));
+  kop.add(bol(0xff8098, 0.065, [0, -0.28, 0.53], [1, 0.6, 0.45], { rand: false }));
+  // wenkbrauwtjes
+  for (const s of [-1, 1]) {
+    const wenkbrauw = torus(bruin, 0.05, 0.011, [s * 0.22, 0.26, 0.45], Math.PI, { rand: false });
+    wenkbrauw.rotation.y = s * 0.28;
+    kop.add(wenkbrauw);
+  }
   // plukje haar
   for (const [x, rz, r] of [[-0.05, 0.5, 0.12], [0.07, -0.45, 0.1]]) {
     const pluk = bol(geel, r, [x, 0.52, 0.06], [0.55, 1.3, 0.55], L);
     pluk.rotation.z = rz;
     kop.add(pluk);
   }
-  ogen(kop, 0.22, 0.04, 0.44, 0.14, 0, { stijl: 'kraal' });
+  ogen(kop, 0.22, 0.04, 0.44, 0.14, 0, { stijl: 'kraal', ster: false });
 
   const oren = [];
   for (const s of [-1, 1]) {
@@ -105,7 +108,7 @@ function maakModel() {
   for (const [x, z] of [[-0.2, 0.22], [0.2, 0.22], [-0.2, -0.26], [0.2, -0.26]]) {
     const poot = groep(x, 0.45, z);
     poot.add(cilinder(geel, 0.12, 0.11, 0.32, [0, -0.17, 0], 10, L));
-    poot.add(bol(geel, 0.14, [0, -0.36, 0.04], [1, 0.7, 1.2], L));
+    poot.add(bol(licht, 0.14, [0, -0.36, 0.04], [1, 0.7, 1.2], L));
     hond.add(poot);
     poten.push(poot);
   }

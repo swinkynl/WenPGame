@@ -158,7 +158,7 @@ export function groep(x = 0, y = 0, z = 0) {
 // x: afstand van het midden, y/z: positie op het gezicht, r: grootte
 // dicht: true geeft blije dichte oogjes (^^)
 // stijl: 'kraal' geeft ronde donkere kraaloogjes met sterretjes-glimmers
-export function ogen(ouder, x, y, z, r = 0.08, irisKleur = 0x5a2d1a, { blos = true, dicht = false, stijl = 'anime' } = {}) {
+export function ogen(ouder, x, y, z, r = 0.08, irisKleur = 0x5a2d1a, { blos = true, dicht = false, stijl = 'anime', ster = true } = {}) {
   const geen = { rand: false };
   const glim = { rand: false, gloed: 0.6 };
   for (const s of [-1, 1]) {
@@ -166,7 +166,8 @@ export function ogen(ouder, x, y, z, r = 0.08, irisKleur = 0x5a2d1a, { blos = tr
     oog.rotation.y = s * 0.28;
     if (stijl === 'kraal' && !dicht) {
       oog.add(bol(0x3a1d12, r, [0, 0, 0], [0.92, 1, 0.45], geen));
-      for (const vorm of [[0.3, 1, 0.2], [1, 0.3, 0.2]]) oog.add(octa(0xffffff, r * 0.34, [r * 0.3, r * 0.3, r * 0.5], vorm, glim));
+      if (ster) for (const vorm of [[0.3, 1, 0.2], [1, 0.3, 0.2]]) oog.add(octa(0xffffff, r * 0.34, [r * 0.3, r * 0.3, r * 0.5], vorm, glim));
+      else oog.add(bol(0xffffff, r * 0.26, [r * 0.28, r * 0.3, r * 0.48], [1, 1, 0.5], glim));
       oog.add(bol(0xffffff, r * 0.12, [-r * 0.28, -r * 0.32, r * 0.46], [1, 1, 0.5], glim));
       if (blos) oog.add(bol(0xff8fab, r * 0.6, [s * r * 0.4, -r * 1.35, r * 0.05], [1.3, 0.65, 0.3], { rand: false, doorzichtig: 0.75 }));
       ouder.add(oog);
